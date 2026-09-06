@@ -32,6 +32,9 @@ export const book = sqliteTable(
     author: text("author"),
     description: text("description"),
     settings: text("settings", { mode: "json" }).$type<BookSettings>(),
+    sourcePath: text("source_path"),
+    sourceSize: integer("source_size"),
+    sourceMimeType: text("source_mime_type"),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .notNull()
       .default(sql`(unixepoch() * 1000)`),
@@ -97,10 +100,7 @@ export const bookChapterContent = sqliteTable(
       .$onUpdateFn(() => new Date()),
   },
   (table) => [
-    index("book_chapter_content_chapter_id_idx").on(
-      table.chapterId,
-      table.index,
-    ),
+    index("book_chapter_content_chapter_id_idx").on(table.chapterId, table.index),
     index("book_chapter_content_book_id_idx").on(table.bookId),
   ],
 );

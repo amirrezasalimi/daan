@@ -3,17 +3,20 @@
 
 :root {
   color-scheme: light;
-  --app-canvas: #fbf9f5;
-  --app-surface: #fffdf9;
-  --app-surface-muted: #eee9df;
-  --app-surface-raised: #ffffff;
-  --app-text: #292724;
-  --app-text-muted: #726d66;
-  --app-text-subtle: #99928a;
-  --app-border: #d9d2c8;
-  --app-border-subtle: #ebe6de;
-  --app-accent: #7a5b35;
-  --app-focus: #92704a;
+  --app-canvas: #f6f2eb;
+  --app-surface: #fbf9f5;
+  --app-surface-muted: #f1ece3;
+  --app-surface-raised: #fffdf9;
+  --app-text: #2d2925;
+  --app-text-muted: #706960;
+  --app-text-subtle: #968d82;
+  --app-border: #d8d0c5;
+  --app-border-subtle: #e9e3da;
+  --app-accent: #76573b;
+  --app-control-active: #76573b;
+  --app-control-active-hover: #65482f;
+  --app-control-active-contrast: #fffaf3;
+  --app-focus: #8c6b4d;
   --app-success: #4f755a;
   --app-warning: #a46f2d;
   --app-danger: #a24d45;
@@ -25,17 +28,20 @@
 
 [data-mantine-color-scheme="dark"] {
   color-scheme: dark;
-  --app-canvas: #201e1c;
-  --app-surface: #292622;
-  --app-surface-muted: #34302b;
-  --app-surface-raised: #302c28;
-  --app-text: #f3eee6;
-  --app-text-muted: #bdb4a8;
-  --app-text-subtle: #8f877e;
-  --app-border: #4b453e;
-  --app-border-subtle: #39342f;
-  --app-accent: #d1b083;
-  --app-focus: #dfc29b;
+  --app-canvas: #1e1b18;
+  --app-surface: #26221e;
+  --app-surface-muted: #302b26;
+  --app-surface-raised: #2b2722;
+  --app-text: #f2ece3;
+  --app-text-muted: #bdb3a6;
+  --app-text-subtle: #91877c;
+  --app-border: #4a433b;
+  --app-border-subtle: #39332d;
+  --app-accent: #c7a47e;
+  --app-control-active: #b78f68;
+  --app-control-active-hover: #c7a47e;
+  --app-control-active-contrast: #211b16;
+  --app-focus: #d2b18c;
   --app-success: #89ad91;
   --app-warning: #d5a15d;
   --app-danger: #d98379;
@@ -67,6 +73,48 @@ body {
 ::selection {
   color: var(--app-text);
   background: color-mix(in srgb, var(--app-accent) 24%, transparent);
+}
+
+/* Align Mantine inputs with the warm design-system surfaces. */
+.mantine-Input-input {
+  color: var(--app-text);
+  background-color: var(--app-surface);
+  border-color: var(--app-border);
+}
+
+.mantine-Input-input::placeholder {
+  color: var(--app-text-subtle);
+}
+
+.mantine-Input-input:focus,
+.mantine-Input-input:focus-within {
+  border-color: var(--app-focus);
+}
+
+.mantine-Input-section {
+  color: var(--app-text-subtle);
+}
+
+/* Slimmer, warm-toned Mantine ScrollArea scrollbars. */
+.mantine-ScrollArea-scrollbar {
+  background: transparent;
+  padding: 2px;
+}
+
+.mantine-ScrollArea-scrollbar[data-orientation="vertical"] {
+  width: 8px;
+}
+
+.mantine-ScrollArea-scrollbar[data-orientation="horizontal"] {
+  height: 8px;
+}
+
+.mantine-ScrollArea-thumb {
+  background: var(--app-border);
+}
+
+.mantine-ScrollArea-thumb:hover {
+  background: var(--app-text-subtle);
 }
 
 :focus-visible {

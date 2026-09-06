@@ -18,6 +18,17 @@ interface BookViewProps {
 }
 
 const SIDEBAR_WIDTH_STORAGE_KEY = "daan:chapter-sidebar-width";
+const SIDEBAR_COLLAPSED_STORAGE_KEY = "daan:chapter-sidebar-collapsed";
+const COLLAPSED_SIDEBAR_WIDTH = 68;
+
+function getSavedSidebarCollapsed(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
 
 function getSavedSidebarWidth(): number {
   if (typeof window === "undefined") return DEFAULT_CHAPTER_SIDEBAR_WIDTH;
@@ -37,6 +48,7 @@ export function BookView({ bookId }: BookViewProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [highlightTerms, setHighlightTerms] = useState<string[]>([]);
   const [sidebarWidth, setSidebarWidth] = useState(getSavedSidebarWidth);
+  const [collapsed, setCollapsed] = useState(getSavedSidebarCollapsed);
 
   useEffect(() => {
     const saveTimer = window.setTimeout(() => {
@@ -50,6 +62,14 @@ export function BookView({ bookId }: BookViewProps) {
   }, [sidebarWidth]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(collapsed));
+    } catch {
+      // Storage may be unavailable in privacy-restricted contexts.
+    }
+  }, [collapsed]);
+
+  useEffect(() => {
     if (!activeId && chapters && chapters.length > 0) {
       setActiveId(chapters[0]?.id ?? null);
     }
@@ -57,8 +77,8 @@ export function BookView({ bookId }: BookViewProps) {
 
   const title = book?.title ?? "Book";
   const activeIndex = chapters?.findIndex((chapter) => chapter.id === activeId) ?? -1;
-  const activeChapter = activeIndex >= 0 ? chapters?.[activeIndex] ?? null : null;
-  const nextChapter = activeIndex >= 0 ? chapters?.[activeIndex + 1] ?? null : null;
+  const activeChapter = activeIndex >= 0 ? (chapters?.[activeIndex] ?? null) : null;
+  const nextChapter = activeIndex >= 0 ? (chapters?.[activeIndex + 1] ?? null) : null;
   const loading = bookLoading || chaptersLoading;
 
   const selectChapter = (chapterId: string, matchedTerms: string[]) => {
@@ -98,12 +118,15 @@ export function BookView({ bookId }: BookViewProps) {
       contentScrollable={false}
     >
       <div
-        className="grid h-full min-h-0 grid-cols-1 overflow-hidden bg-[var(--app-canvas)] lg:grid-cols-[var(--chapter-sidebar-width)_0.75rem_minmax(0,1fr)]"
+        className="grid h-full min-h-0 grid-cols-1 overflow-hidden bg-[var(--app-canvas)] transition-[grid-template-columns] duration-200 ease-out lg:grid-cols-[var(--chapter-sidebar-width)_var(--chapter-handle-width)_minmax(0,1fr)]"
         style={
-          { "--chapter-sidebar-width": `${sidebarWidth}px` } as CSSProperties
+          {
+            "--chapter-sidebar-width": `${collapsed ? COLLAPSED_SIDEBAR_WIDTH : sidebarWidth}px`,
+            "--chapter-handle-width": collapsed ? "0px" : "0.75rem",
+          } as CSSProperties
         }
       >
-        <aside className="hidden min-h-0 border-r border-[var(--app-border-subtle)] bg-[var(--app-surface)] p-5 lg:block">
+        <aside className="hidden min-h-0 overflow-hidden border-r border-[var(--app-border-subtle)] bg-[var(--app-surface)] p-5 lg:block">
           {loading ? (
             <div className="grid place-items-center py-10">
               <Loader size="sm" color="brand" />
@@ -113,6 +136,8 @@ export function BookView({ bookId }: BookViewProps) {
               bookId={bookId}
               chapters={chapters ?? []}
               activeId={activeId}
+              collapsed={collapsed}
+              onToggleCollapse={() => setCollapsed((value) => !value)}
               onSelect={selectChapter}
             />
           )}
@@ -121,6 +146,7 @@ export function BookView({ bookId }: BookViewProps) {
         <SidebarResizeHandle
           width={sidebarWidth}
           onWidthChange={setSidebarWidth}
+          disabled={collapsed}
         />
 
         <div className="min-h-0 overflow-hidden">

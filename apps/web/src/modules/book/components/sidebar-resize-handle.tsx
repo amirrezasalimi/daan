@@ -4,6 +4,7 @@ import { type PointerEvent, useEffect, useRef, useState } from "react";
 interface SidebarResizeHandleProps {
   width: number;
   onWidthChange: (width: number) => void;
+  disabled?: boolean;
 }
 
 const MIN_WIDTH = 220;
@@ -19,6 +20,7 @@ export function clampChapterSidebarWidth(width: number): number {
 export function SidebarResizeHandle({
   width,
   onWidthChange,
+  disabled = false,
 }: SidebarResizeHandleProps) {
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef({ x: 0, width });
@@ -28,9 +30,7 @@ export function SidebarResizeHandle({
 
     const handleMove = (event: globalThis.PointerEvent) => {
       onWidthChange(
-        clampChapterSidebarWidth(
-          dragStart.current.width + event.clientX - dragStart.current.x,
-        ),
+        clampChapterSidebarWidth(dragStart.current.width + event.clientX - dragStart.current.x),
       );
     };
     const handleEnd = () => setDragging(false);
@@ -44,10 +44,15 @@ export function SidebarResizeHandle({
   }, [dragging, onWidthChange]);
 
   const startDragging = (event: PointerEvent<HTMLDivElement>) => {
+    if (disabled) return;
     event.preventDefault();
     dragStart.current = { x: event.clientX, width };
     setDragging(true);
   };
+
+  if (disabled) {
+    return <div aria-hidden="true" className="hidden lg:block" />;
+  }
 
   return (
     <div

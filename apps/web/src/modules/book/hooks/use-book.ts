@@ -7,8 +7,7 @@ import { orpc } from "@/shared/utils/orpc";
 type RouterOutputs = InferRouterOutputs<AppRouter>;
 export type BookChapter = RouterOutputs["book"]["getChapters"][number];
 export type BookContent = RouterOutputs["book"]["getChapterContent"][number];
-export type ChapterSearchResult =
-  RouterOutputs["book"]["searchChapters"][number];
+export type ChapterSearchResult = RouterOutputs["book"]["searchChapters"][number];
 
 export function useBookQuery(id: string) {
   return useQuery(orpc.book.getById.queryOptions({ input: { id } }));

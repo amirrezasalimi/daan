@@ -1,11 +1,7 @@
 import type { StructuredTextItem } from "unpdf";
 
 import { cleanChapterTitle } from "./chapter-title";
-import {
-  mergePdfLines,
-  type PdfLine,
-  weightedBodyFontSize,
-} from "./pdf-layout";
+import { mergePdfLines, type PdfLine, weightedBodyFontSize } from "./pdf-layout";
 
 function escapeHtml(value: string): string {
   return value
@@ -73,9 +69,7 @@ function renderPage(lines: PdfLine[], bodySize: number): string {
  * Convert positioned PDF text into a trusted semantic subset:
  * h2, h3, p and strong. All source text is HTML-escaped first.
  */
-export function formatPdfPages(
-  pageItems: StructuredTextItem[][],
-): string[] {
+export function formatPdfPages(pageItems: StructuredTextItem[][]): string[] {
   const allLines = mergePdfLines(pageItems);
   const bodySize = weightedBodyFontSize(allLines.flat());
   return allLines.map((lines) => renderPage(lines, bodySize));

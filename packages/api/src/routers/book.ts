@@ -1,18 +1,12 @@
 import { db } from "@daan/db";
-import {
-  book,
-  bookChapter,
-  bookChapterContent,
-} from "@daan/db/schema/book";
+import { book, bookChapter, bookChapterContent } from "@daan/db/schema/book";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { parseBookSource } from "../books";
 import { cleanChapterTitle } from "../books/chapter-title";
-import {
-  invalidateBookSearchIndex,
-  searchBookChapters,
-} from "../books/search-index";
+import { removeBookSource, storeBookSource } from "../books/source-storage";
+import { invalidateBookSearchIndex, searchBookChapters } from "../books/search-index";
 import { readConfig } from "../config";
 import { publicProcedure } from "../index";
 
@@ -24,12 +18,10 @@ export const bookRouter = {
     return db.select().from(book).orderBy(asc(book.title));
   }),
 
-  getById: publicProcedure
-    .input(z.object({ id: z.string().min(1) }))
-    .handler(async ({ input }) => {
-      const rows = await db.select().from(book).where(eq(book.id, input.id));
-      return rows[0] ?? null;
-    }),
+  getById: publicProcedure.input(z.object({ id: z.string().min(1) })).handler(async ({ input }) => {
+    const rows = await db.select().from(book).where(eq(book.id, input.id));
+    return rows[0] ?? null;
+  }),
 
   getChapters: publicProcedure
     .input(z.object({ bookId: z.string().min(1) }))
@@ -64,13 +56,17 @@ export const bookRouter = {
     )
     .handler(({ input }) => searchBookChapters(input.bookId, input.query)),
 
-  delete: publicProcedure
-    .input(z.object({ id: z.string().min(1) }))
-    .handler(async ({ input }) => {
-      await db.delete(book).where(eq(book.id, input.id));
-      invalidateBookSearchIndex(input.id);
-      return { id: input.id };
-    }),
+  delete: publicProcedure.input(z.object({ id: z.string().min(1) })).handler(async ({ input }) => {
+    const rows = await db
+      .select({ sourcePath: book.sourcePath })
+      .from(book)
+      .where(eq(book.id, input.id));
+
+    await db.delete(book).where(eq(book.id, input.id));
+    await removeBookSource(rows[0]?.sourcePath ?? null);
+    invalidateBookSearchIndex(input.id);
+    return { id: input.id };
+  }),
 
   /**
    * Import a book from an uploaded file (base64-encoded). Parses the source,
@@ -90,55 +86,65 @@ export const bookRouter = {
     .handler(async ({ input }) => {
       const bytes = Buffer.from(input.data, "base64");
       const config = readConfig();
-      const parsed = await parseBookSource(
-        new Uint8Array(bytes),
-        input.type,
-        config,
-      );
+      const parsed = await parseBookSource(new Uint8Array(bytes), input.type, config);
 
       const fallbackTitle = input.fileName.replace(/\.[^.]+$/, "");
-      const title =
-        input.title?.trim() || parsed.title?.trim() || fallbackTitle;
+      const title = input.title?.trim() || parsed.title?.trim() || fallbackTitle;
       const author = input.author?.trim() || parsed.author || null;
 
       const bookId = crypto.randomUUID();
       const now = new Date();
+      const source = await storeBookSource(
+        bookId,
+        input.fileName,
+        input.type,
+        new Uint8Array(bytes),
+      );
 
-      await db.insert(book).values({
-        id: bookId,
-        title,
-        type: input.type,
-        author,
-        description: null,
-        settings: null,
-        createdAt: now,
-        updatedAt: now,
-      });
-
-      for (let i = 0; i < parsed.chapters.length; i += 1) {
-        const chapter = parsed.chapters[i]!;
-        const chapterId = crypto.randomUUID();
-
-        await db.insert(bookChapter).values({
-          id: chapterId,
-          bookId,
-          title: cleanChapterTitle(chapter.title),
-          index: i,
-          startPage: chapter.startPage,
-          endPage: chapter.endPage,
+      try {
+        await db.insert(book).values({
+          id: bookId,
+          title,
+          type: input.type,
+          author,
+          description: null,
+          settings: null,
+          sourcePath: source.path,
+          sourceSize: source.size,
+          sourceMimeType: source.mimeType,
           createdAt: now,
           updatedAt: now,
         });
 
-        await db.insert(bookChapterContent).values({
-          id: crypto.randomUUID(),
-          bookId,
-          chapterId,
-          index: 0,
-          content: chapter.content,
-          createdAt: now,
-          updatedAt: now,
-        });
+        for (let i = 0; i < parsed.chapters.length; i += 1) {
+          const chapter = parsed.chapters[i]!;
+          const chapterId = crypto.randomUUID();
+
+          await db.insert(bookChapter).values({
+            id: chapterId,
+            bookId,
+            title: cleanChapterTitle(chapter.title),
+            index: i,
+            startPage: chapter.startPage,
+            endPage: chapter.endPage,
+            createdAt: now,
+            updatedAt: now,
+          });
+
+          await db.insert(bookChapterContent).values({
+            id: crypto.randomUUID(),
+            bookId,
+            chapterId,
+            index: 0,
+            content: chapter.content,
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+      } catch (error) {
+        await db.delete(book).where(eq(book.id, bookId));
+        await removeBookSource(source.path);
+        throw error;
       }
 
       return {

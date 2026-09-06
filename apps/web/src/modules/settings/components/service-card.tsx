@@ -11,15 +11,7 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
-import {
-  ChevronDown,
-  ChevronUp,
-  DownloadCloud,
-  Plus,
-  Search,
-  Trash2,
-  X,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, DownloadCloud, Plus, Search, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -39,12 +31,7 @@ function emptyModel(): ModelConfig {
   return { name: "", id: "", supportTools: false, supportVision: false };
 }
 
-export function ServiceCard({
-  service,
-  index,
-  onChange,
-  onRemove,
-}: ServiceCardProps) {
+export function ServiceCard({ service, index, onChange, onRemove }: ServiceCardProps) {
   const listModels = useListModels();
   const [showAllModels, setShowAllModels] = useState(false);
   const [modelQuery, setModelQuery] = useState("");
@@ -59,15 +46,14 @@ export function ServiceCard({
       )
     : indexedModels;
   const hasMoreModels = service.models.length > INITIAL_MODEL_COUNT;
-  const visibleModels = normalizedQuery || showAllModels
-    ? filteredModels
-    : filteredModels.slice(0, INITIAL_MODEL_COUNT);
+  const visibleModels =
+    normalizedQuery || showAllModels
+      ? filteredModels
+      : filteredModels.slice(0, INITIAL_MODEL_COUNT);
 
   const updateModel = (modelIndex: number, patch: Partial<ModelConfig>) => {
     onChange({
-      models: service.models.map((m, i) =>
-        i === modelIndex ? { ...m, ...patch } : m,
-      ),
+      models: service.models.map((m, i) => (i === modelIndex ? { ...m, ...patch } : m)),
     });
   };
 
@@ -104,17 +90,12 @@ export function ServiceCard({
   };
 
   return (
-    <div className="rounded-xl border border-[var(--app-border-subtle)] bg-[var(--app-surface-muted)] p-4">
+    <div className="rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5">
       <Group justify="space-between" align="flex-start" mb="sm">
         <Text size="sm" fw={600} c="var(--app-text)">
           {service.name || `Service ${index + 1}`}
         </Text>
-        <ActionIcon
-          variant="subtle"
-          color="red"
-          aria-label="Remove service"
-          onClick={onRemove}
-        >
+        <ActionIcon variant="subtle" color="red" aria-label="Remove service" onClick={onRemove}>
           <Trash2 size={16} />
         </ActionIcon>
       </Group>
@@ -141,11 +122,7 @@ export function ServiceCard({
           onChange={(e) => onChange({ apiKey: e.currentTarget.value })}
         />
 
-        <Divider
-          label="Models"
-          labelPosition="left"
-          c="var(--app-text-muted)"
-        />
+        <Divider label="Models" labelPosition="left" c="var(--app-text-muted)" />
 
         {service.models.length > 0 ? (
           <TextInput
@@ -172,11 +149,7 @@ export function ServiceCard({
           />
         ) : null}
 
-        <ScrollArea.Autosize
-          mah={MODEL_LIST_MAX_HEIGHT}
-          type="auto"
-          offsetScrollbars="y"
-        >
+        <ScrollArea.Autosize mah={MODEL_LIST_MAX_HEIGHT} type="auto" offsetScrollbars="y">
           <Stack gap="sm" pr="xs">
             {normalizedQuery && visibleModels.length === 0 ? (
               <Text size="sm" c="var(--app-text-subtle)" ta="center" py="md">
@@ -186,65 +159,61 @@ export function ServiceCard({
             {visibleModels.map(({ model, modelIndex }) => (
               <div
                 key={`${model.id}-${modelIndex}`}
-                className="rounded-lg border border-[var(--app-border-subtle)] bg-[var(--app-surface)] p-3"
+                className="rounded-lg border border-[var(--app-border-subtle)] bg-[var(--app-surface-raised)] p-3"
               >
-            <Group grow mb="xs">
-              <TextInput
-                size="xs"
-                label="Display name"
-                placeholder="GPT-4o"
-                value={model.name}
-                onChange={(e) =>
-                  updateModel(modelIndex, { name: e.currentTarget.value })
-                }
-              />
-              <TextInput
-                size="xs"
-                label="Model id"
-                placeholder="gpt-4o"
-                value={model.id}
-                onChange={(e) =>
-                  updateModel(modelIndex, { id: e.currentTarget.value })
-                }
-              />
-            </Group>
-            <Group justify="space-between" align="center">
-              <Group gap="lg">
-                <Checkbox
-                  size="xs"
-                  label="Tools"
-                  checked={model.supportTools}
-                  onChange={(e) =>
-                    updateModel(modelIndex, {
-                      supportTools: e.currentTarget.checked,
-                    })
-                  }
-                />
-                <Checkbox
-                  size="xs"
-                  label="Vision"
-                  checked={model.supportVision}
-                  onChange={(e) =>
-                    updateModel(modelIndex, {
-                      supportVision: e.currentTarget.checked,
-                    })
-                  }
-                />
-              </Group>
-              <ActionIcon
-                size="sm"
-                variant="subtle"
-                color="red"
-                aria-label="Remove model"
-                onClick={() =>
-                  onChange({
-                    models: service.models.filter((_, i) => i !== modelIndex),
-                  })
-                }
-              >
-                <Trash2 size={14} />
-              </ActionIcon>
-            </Group>
+                <Group grow mb="xs">
+                  <TextInput
+                    size="xs"
+                    label="Display name"
+                    placeholder="GPT-4o"
+                    value={model.name}
+                    onChange={(e) => updateModel(modelIndex, { name: e.currentTarget.value })}
+                  />
+                  <TextInput
+                    size="xs"
+                    label="Model id"
+                    placeholder="gpt-4o"
+                    value={model.id}
+                    onChange={(e) => updateModel(modelIndex, { id: e.currentTarget.value })}
+                  />
+                </Group>
+                <Group justify="space-between" align="center">
+                  <Group gap="lg">
+                    <Checkbox
+                      size="xs"
+                      label="Tools"
+                      checked={model.supportTools}
+                      onChange={(e) =>
+                        updateModel(modelIndex, {
+                          supportTools: e.currentTarget.checked,
+                        })
+                      }
+                    />
+                    <Checkbox
+                      size="xs"
+                      label="Vision"
+                      checked={model.supportVision}
+                      onChange={(e) =>
+                        updateModel(modelIndex, {
+                          supportVision: e.currentTarget.checked,
+                        })
+                      }
+                    />
+                  </Group>
+                  <ActionIcon
+                    size="sm"
+                    variant="subtle"
+                    color="red"
+                    aria-label="Remove model"
+                    onClick={() =>
+                      onChange({
+                        models: service.models.filter((_, i) => i !== modelIndex),
+                      })
+                    }
+                  >
+                    <Trash2 size={14} />
+                  </ActionIcon>
+                </Group>
               </div>
             ))}
           </Stack>
@@ -276,9 +245,7 @@ export function ServiceCard({
             variant="subtle"
             color="brand"
             leftSection={<Plus size={14} />}
-            onClick={() =>
-              onChange({ models: [...service.models, emptyModel()] })
-            }
+            onClick={() => onChange({ models: [...service.models, emptyModel()] })}
           >
             Add model
           </Button>

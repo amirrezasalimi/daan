@@ -24,13 +24,11 @@ interface HeadingMarker {
   pageIndex: number;
   lineIndex: number;
   score: number;
+  style: string;
 }
 
-const CHAPTER_PATTERN = /^(chapter|part|book|section)\s+(\d{1,3}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\b/i;
-const NAMED_SECTION_PATTERN = /^(prologue|epilogue|introduction|foreword|preface|afterword|conclusion|appendix)(\b|\s+[a-z0-9])/i;
-const TOC_PATTERN = /^(table of )?contents?$/i;
-const NON_CONTENT_PATTERN = /^(cover|title page|copyright|contents?|table of contents)$/i;
-const MAX_TITLE_LENGTH = 120;
+const SENTENCE_END_PATTERN = /[.!?;]$/;
+const MAX_TITLE_LENGTH = 140;
 
 function cleanText(text: string): string {
   return text.replace(/\s+/g, " ").trim();
@@ -73,11 +71,11 @@ export function mergePdfLines(pages: StructuredTextItem[][]): PdfLine[][] {
       if (current.length === 0) return;
       const text = cleanText(current.map((item) => item.str).join(" "));
       if (text) {
-        const charCount = Math.max(1, text.length);
         const weightedFont = current.reduce(
           (sum, item) => sum + item.fontSize * Math.max(1, item.str.length),
           0,
         );
+        const weight = current.reduce((sum, item) => sum + Math.max(1, item.str.length), 0);
         const x = Math.min(...current.map((item) => item.x));
         const right = Math.max(...current.map((item) => item.x + item.width));
         const runs: PdfTextRun[] = [];
@@ -96,14 +94,11 @@ export function mergePdfLines(pages: StructuredTextItem[][]): PdfLine[][] {
           text,
           pageIndex,
           lineIndex: lines.length,
-          fontSize: weightedFont / current.reduce(
-            (sum, item) => sum + Math.max(1, item.str.length),
-            0,
-          ),
+          fontSize: weightedFont / weight,
           x,
           y: Math.max(...current.map((item) => item.y)),
           width: right - x,
-          charCount,
+          charCount: Math.max(1, text.length),
           runs,
         });
       }
@@ -115,7 +110,6 @@ export function mergePdfLines(pages: StructuredTextItem[][]): PdfLine[][] {
         if (item.hasEOL) flush();
         continue;
       }
-
       const previous = current.at(-1);
       const sameVisualLine = previous
         ? Math.abs(previous.y - item.y) <= Math.max(1.5, item.fontSize * 0.22)
@@ -131,11 +125,8 @@ export function mergePdfLines(pages: StructuredTextItem[][]): PdfLine[][] {
 
 function findRepeatedMargins(pages: PdfLine[][]): Set<string> {
   const occurrences = new Map<string, Set<number>>();
-
   for (const [pageIndex, lines] of pages.entries()) {
-    if (lines.length === 0) continue;
-    const marginLines = [...lines.slice(0, 3), ...lines.slice(-3)];
-    for (const line of marginLines) {
+    for (const line of [...lines.slice(0, 3), ...lines.slice(-3)]) {
       if (line.text.length > 90) continue;
       const normalized = normalizeRepeatedText(line.text);
       if (normalized.length < 3) continue;
@@ -155,79 +146,121 @@ function findRepeatedMargins(pages: PdfLine[][]): Set<string> {
 
 function looksUppercase(text: string): boolean {
   const letters = text.match(/\p{L}/gu) ?? [];
-  if (letters.length < 4) return false;
+  if (letters.length < 3) return false;
   const uppercase = text.match(/\p{Lu}/gu) ?? [];
-  return uppercase.length / letters.length >= 0.82;
+  return uppercase.length / letters.length >= 0.78;
 }
 
-function isTocPage(lines: PdfLine[]): boolean {
-  const first = lines.slice(0, 10).some((line) => TOC_PATTERN.test(line.text));
-  const tocRows = lines.filter(
-    (line) => /\.{2,}\s*\d+\s*$/.test(line.text) || /\s\d+\s*$/.test(line.text),
+function isIndexPage(lines: PdfLine[]): boolean {
+  if (lines.length < 6) return false;
+  const indexedRows = lines.filter(
+    (line) => /\.{2,}\s*\d+\s*$/.test(line.text) || /^.{3,100}\s+\d+\s*$/.test(line.text),
   ).length;
-  return first && tocRows >= 3;
+  return indexedRows / lines.length >= 0.35;
+}
+
+function lineIsBold(line: PdfLine): boolean {
+  return line.runs.length > 0 && line.runs.every((run) => run.bold);
+}
+
+function styleKey(line: PdfLine, bodySize: number): string {
+  const ratioBucket = Math.round((line.fontSize / Math.max(1, bodySize)) * 10) / 10;
+  return `${ratioBucket}:${lineIsBold(line) ? "b" : "r"}:${looksUppercase(line.text) ? "u" : "m"}`;
+}
+
+function pageBodySize(lines: PdfLine[], globalBodySize: number): number {
+  const local = weightedBodyFontSize(lines);
+  return local >= globalBodySize * 0.72 && local <= globalBodySize * 1.4 ? local : globalBodySize;
 }
 
 function scoreHeading(
   line: PdfLine,
   pageLines: PdfLine[],
-  bodyFontSize: number,
+  bodySize: number,
   repeatedMargins: Set<string>,
 ): number {
   const text = line.text;
   if (!text || text.length > MAX_TITLE_LENGTH) return -100;
-  if (NON_CONTENT_PATTERN.test(text)) return -100;
   if (repeatedMargins.has(normalizeRepeatedText(text))) return -100;
   if (/\.{2,}\s*\d+\s*$/.test(text)) return -100;
 
-  const explicit = CHAPTER_PATTERN.test(text) || NAMED_SECTION_PATTERN.test(text);
-  const fontRatio = line.fontSize / Math.max(1, bodyFontSize);
-  let score = explicit ? 7 : 0;
+  const fontRatio = line.fontSize / Math.max(1, bodySize);
+  const bold = lineIsBold(line);
+  let score = 0;
 
   if (fontRatio >= 1.65) score += 5;
   else if (fontRatio >= 1.35) score += 4;
-  else if (fontRatio >= 1.16) score += 2;
-  else if (!explicit) score -= 4;
+  else if (fontRatio >= 1.12) score += 2.5;
+  else if (fontRatio >= 1.04 && bold) score += 1.5;
+  else score -= 4;
 
-  if (line.lineIndex <= 2) score += 2;
-  else if (line.lineIndex <= Math.max(5, Math.floor(pageLines.length * 0.25))) score += 1;
-
+  if (bold) score += 1.5;
+  if (line.lineIndex <= 3) score += 2;
+  else if (line.lineIndex <= Math.max(7, Math.floor(pageLines.length * 0.3))) score += 1;
   if (looksUppercase(text)) score += 1;
-  if (text.length <= 55) score += 1;
-  if (/[.!?;:]$/.test(text) && !explicit) score -= 2;
-  if (text.split(/\s+/).length > 14) score -= 3;
+  if (text.length <= 65) score += 1;
+  if (SENTENCE_END_PATTERN.test(text)) score -= 2.5;
+  if (text.split(/\s+/).length > 16) score -= 3;
 
   const previous = pageLines[line.lineIndex - 1];
-  if (previous && previous.y - line.y > bodyFontSize * 1.8) score += 1;
+  const next = pageLines[line.lineIndex + 1];
+  if (!previous || previous.y - line.y > bodySize * 1.55) score += 1;
+  if (!next || line.y - next.y > bodySize * 1.35) score += 0.75;
   return score;
 }
 
 function joinHeadingTitle(line: PdfLine, pageLines: PdfLine[], bodySize: number): string {
-  if (!CHAPTER_PATTERN.test(line.text)) return line.text;
-
   const following = pageLines[line.lineIndex + 1];
-  if (!following || following.text.length > 90) return line.text;
+  if (!following || following.text.length > 100 || line.text.length > 36) return line.text;
   const close = Math.abs(line.y - following.y) <= Math.max(line.fontSize, following.fontSize) * 2.8;
-  const titleLike = following.fontSize >= bodySize * 1.12 || looksUppercase(following.text);
-  if (!close || !titleLike || /[.!?;]$/.test(following.text)) return line.text;
+  const similarScale = Math.abs(line.fontSize - following.fontSize) <= bodySize * 0.18;
+  const titleLike =
+    following.fontSize >= bodySize * 1.08 ||
+    lineIsBold(following) ||
+    looksUppercase(following.text);
+  if (!close || !similarScale || !titleLike || SENTENCE_END_PATTERN.test(following.text)) {
+    return line.text;
+  }
   return following.text;
 }
 
-function removeImplausibleMarkers(markers: HeadingMarker[]): HeadingMarker[] {
-  if (markers.length <= 1) return markers;
-  const ordered = markers.sort(
-    (a, b) => a.pageIndex - b.pageIndex || a.lineIndex - b.lineIndex,
+function recurringHeadingStyles(markers: HeadingMarker[]): Set<string> {
+  const pagesByStyle = new Map<string, Set<number>>();
+  for (const marker of markers) {
+    if (marker.score < 4.5) continue;
+    const pages = pagesByStyle.get(marker.style) ?? new Set<number>();
+    pages.add(marker.pageIndex);
+    pagesByStyle.set(marker.style, pages);
+  }
+  return new Set(
+    [...pagesByStyle.entries()]
+      .filter(([, pageIndexes]) => pageIndexes.size >= 3)
+      .map(([style]) => style),
   );
-  const unique: HeadingMarker[] = [];
+}
+
+function selectMarkers(markers: HeadingMarker[]): HeadingMarker[] {
+  const recurringStyles = recurringHeadingStyles(markers);
+  const ordered = markers
+    .filter(
+      (marker) => marker.score >= 7 || (marker.score >= 5.25 && recurringStyles.has(marker.style)),
+    )
+    .sort((a, b) => a.pageIndex - b.pageIndex || a.lineIndex - b.lineIndex);
+
+  const selected: HeadingMarker[] = [];
   for (const marker of ordered) {
-    const previous = unique.at(-1);
+    const previous = selected.at(-1);
     if (previous?.pageIndex === marker.pageIndex) {
-      if (marker.score > previous.score) unique[unique.length - 1] = marker;
+      const sameHeading = Math.abs(previous.lineIndex - marker.lineIndex) <= 1;
+      if (sameHeading) {
+        if (marker.score > previous.score) selected[selected.length - 1] = marker;
+        continue;
+      }
       continue;
     }
-    unique.push(marker);
+    selected.push(marker);
   }
-  return unique;
+  return selected;
 }
 
 export function detectChaptersFromLayout(
@@ -235,33 +268,36 @@ export function detectChaptersFromLayout(
   pageTexts: string[],
 ): DetectedChapter[] {
   const pages = mergePdfLines(pageItems);
-  const allLines = pages.flat();
-  const bodySize = weightedBodyFontSize(allLines);
+  const globalBodySize = weightedBodyFontSize(pages.flat());
   const repeatedMargins = findRepeatedMargins(pages);
-  const markers: HeadingMarker[] = [];
+  const candidates: HeadingMarker[] = [];
 
   for (const lines of pages) {
-    if (isTocPage(lines)) continue;
+    if (isIndexPage(lines)) continue;
+    const bodySize = pageBodySize(lines, globalBodySize);
     for (const line of lines) {
       const score = scoreHeading(line, lines, bodySize, repeatedMargins);
-      if (score < 6) continue;
-      markers.push({
+      if (score < 4) continue;
+      candidates.push({
         title: joinHeadingTitle(line, lines, bodySize),
         pageIndex: line.pageIndex,
         lineIndex: line.lineIndex,
         score,
+        style: styleKey(line, bodySize),
       });
     }
   }
 
-  const selected = removeImplausibleMarkers(markers);
+  const selected = selectMarkers(candidates);
   if (selected.length === 0) {
-    return [{
-      title: "Full text",
-      startPage: 1,
-      endPage: Math.max(1, pageTexts.length),
-      content: pageTexts.join("\n\n").trim(),
-    }];
+    return [
+      {
+        title: "Full text",
+        startPage: 1,
+        endPage: Math.max(1, pageTexts.length),
+        content: pageTexts.join("\n\n").trim(),
+      },
+    ];
   }
 
   return selected.map((marker, index) => {
@@ -273,7 +309,10 @@ export function detectChaptersFromLayout(
       title: marker.title,
       startPage: marker.pageIndex + 1,
       endPage: endPageIndex + 1,
-      content: pageTexts.slice(marker.pageIndex, endPageIndex + 1).join("\n\n").trim(),
+      content: pageTexts
+        .slice(marker.pageIndex, endPageIndex + 1)
+        .join("\n\n")
+        .trim(),
     };
   });
 }

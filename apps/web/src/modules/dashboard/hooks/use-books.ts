@@ -27,9 +27,7 @@ export function useImportBook() {
     mutationFn: (input: ImportBookInput) => client.book.import(input),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: orpc.book.list.queryKey() });
-      toast.success(
-        `Imported “${result.title}” · ${result.chapterCount} chapter(s)`,
-      );
+      toast.success(`Imported “${result.title}” · ${result.chapterCount} chapter(s)`);
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to import book");

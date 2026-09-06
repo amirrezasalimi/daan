@@ -31,8 +31,9 @@ function htmlToText(html: string): string {
 }
 
 function attr(tag: string, name: string): string | null {
-  const match = tag.match(new RegExp(`${name}\\s*=\\s*"([^"]*)"`, "i"))
-    ?? tag.match(new RegExp(`${name}\\s*=\\s*'([^']*)'`, "i"));
+  const match =
+    tag.match(new RegExp(`${name}\\s*=\\s*"([^"]*)"`, "i")) ??
+    tag.match(new RegExp(`${name}\\s*=\\s*'([^']*)'`, "i"));
   return match?.[1] ?? null;
 }
 
@@ -104,10 +105,12 @@ function parseToc(
   const markers: { title: string; spineIndex: number }[] = [];
 
   // EPUB3 nav document.
-  const navItem = Object.values(manifest).find((m) =>
-    /nav/i.test(m.href) || m.mediaType === "application/xhtml+xml",
+  const navItem = Object.values(manifest).find(
+    (m) => /nav/i.test(m.href) || m.mediaType === "application/xhtml+xml",
   );
-  const navId = opf.match(/properties\s*=\s*["'][^"']*nav[^"']*["'][^>]*href\s*=\s*["']([^"']+)["']/i);
+  const navId = opf.match(
+    /properties\s*=\s*["'][^"']*nav[^"']*["'][^>]*href\s*=\s*["']([^"']+)["']/i,
+  );
 
   let navHref: string | null = null;
   if (navId?.[1]) navHref = resolvePath(opfPath, navId[1]);
@@ -175,9 +178,8 @@ export function parseEpub(data: Uint8Array): ParsedBook {
 
   const toc = parseToc(files, opf, opfPath, manifest, spine);
 
-  const markers = toc.length > 0
-    ? toc
-    : spine.map((_, i) => ({ title: `Section ${i + 1}`, spineIndex: i }));
+  const markers =
+    toc.length > 0 ? toc : spine.map((_, i) => ({ title: `Section ${i + 1}`, spineIndex: i }));
 
   if ((markers[0]?.spineIndex ?? 0) > 0) {
     markers.unshift({ title: "Front matter", spineIndex: 0 });
@@ -188,7 +190,10 @@ export function parseEpub(data: Uint8Array): ParsedBook {
     const next = markers[i + 1];
     const end = next ? next.spineIndex - 1 : spine.length - 1;
     const safeEnd = Math.max(start, end);
-    const content = pages.slice(start, safeEnd + 1).join("\n\n").trim();
+    const content = pages
+      .slice(start, safeEnd + 1)
+      .join("\n\n")
+      .trim();
     return {
       title: marker.title || `Section ${i + 1}`,
       startPage: start + 1,

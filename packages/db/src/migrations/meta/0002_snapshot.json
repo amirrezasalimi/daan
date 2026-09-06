@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "333e0e7b-a1e7-466f-b301-d70189fabe7e",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "8491d033-b915-484a-82ca-305dee31c2e4",
+  "prevId": "53a3fab7-f04d-43ba-83bc-1aedda1c8a71",
   "tables": {
     "book": {
       "name": "book",
@@ -45,6 +45,27 @@
         },
         "settings": {
           "name": "settings",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "source_path": {
+          "name": "source_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "source_size": {
+          "name": "source_size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "source_mime_type": {
+          "name": "source_mime_type",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -110,6 +131,20 @@
           "notNull": true,
           "autoincrement": false,
           "default": 0
+        },
+        "start_page": {
+          "name": "start_page",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "end_page": {
+          "name": "end_page",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "created_at": {
           "name": "created_at",

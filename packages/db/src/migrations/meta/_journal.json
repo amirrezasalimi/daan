@@ -15,6 +15,13 @@
       "when": 1788697598984,
       "tag": "0001_yellow_night_thrasher",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788715231564,
+      "tag": "0002_clear_red_ghost",
+      "breakpoints": true
     }
   ]
 }

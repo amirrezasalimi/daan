@@ -1,7 +1,10 @@
 import {
   ActionIcon,
   Button,
+  Checkbox,
+  Modal,
   Paper,
+  Switch,
   createTheme,
   virtualColor,
 } from "@mantine/core";
@@ -32,6 +35,19 @@ const cream = [
   "#4b3d30",
 ] as const;
 
+const walnut = [
+  "#f7f1eb",
+  "#eadfd3",
+  "#d9c5b1",
+  "#c5a98d",
+  "#b18d6b",
+  "#987153",
+  "#825f43",
+  "#76573b",
+  "#65482f",
+  "#513923",
+] as const;
+
 export const appTheme = createTheme({
   autoContrast: true,
   black: "#292724",
@@ -39,21 +55,20 @@ export const appTheme = createTheme({
   colors: {
     ink,
     cream,
+    walnut,
     brand: virtualColor({
       name: "brand",
-      light: "ink",
-      dark: "cream",
+      light: "walnut",
+      dark: "walnut",
     }),
   },
   primaryColor: "brand",
-  primaryShade: { light: 7, dark: 2 },
+  primaryShade: { light: 7, dark: 4 },
   cursorType: "pointer",
   defaultRadius: "md",
-  fontFamily:
-    '"Avenir Next", Avenir, "Segoe UI", Helvetica, Arial, sans-serif',
+  fontFamily: '"Avenir Next", Avenir, "Segoe UI", Helvetica, Arial, sans-serif',
   headings: {
-    fontFamily:
-      '"Iowan Old Style", Baskerville, "Times New Roman", Times, serif',
+    fontFamily: '"Iowan Old Style", Baskerville, "Times New Roman", Times, serif',
     fontWeight: "400",
     textWrap: "balance",
     sizes: {
@@ -113,6 +128,36 @@ export const appTheme = createTheme({
       defaultProps: {
         radius: "xl",
         size: "md",
+      },
+    }),
+    Checkbox: Checkbox.extend({
+      defaultProps: {
+        color: "var(--app-control-active)",
+      },
+    }),
+    Modal: Modal.extend({
+      defaultProps: {
+        overlayProps: { backgroundOpacity: 0.52, blur: 3 },
+        shadow: "md",
+      },
+      styles: {
+        content: {
+          background: "var(--app-surface-raised)",
+          border: "1px solid var(--app-border-subtle)",
+        },
+        header: {
+          background: "var(--app-surface-raised)",
+          borderBottom: "1px solid var(--app-border-subtle)",
+        },
+        body: {
+          background: "var(--app-surface-raised)",
+        },
+      },
+    }),
+    Switch: Switch.extend({
+      defaultProps: {
+        color: "var(--app-control-active)",
+        radius: "xl",
       },
     }),
     Paper: Paper.extend({

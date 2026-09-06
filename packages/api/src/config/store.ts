@@ -10,7 +10,7 @@ const CONFIG_FILENAME = "config.yaml";
  * Walk up from the current working directory to find the monorepo root
  * (identified by a package.json that declares workspaces). Falls back to cwd.
  */
-function findProjectRoot(): string {
+export function findProjectRoot(): string {
   let dir = process.cwd();
 
   for (let i = 0; i < 12; i += 1) {

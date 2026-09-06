@@ -55,50 +55,63 @@ export function DefaultsPanel({
   }));
 
   return (
-    <Stack gap="lg">
-      <div>
+    <Stack gap={0}>
+      <section className="border-b border-[var(--app-border-subtle)] pb-6">
         <Text fw={600} c="var(--app-text)" mb={4}>
           Chapter extraction
         </Text>
-        <Text size="xs" c="var(--app-text-muted)" mb="xs">
-          How chapters are detected when importing a book.
+        <Text size="xs" c="var(--app-text-muted)" mb="md">
+          Choose how chapters are detected when importing a book.
         </Text>
         <SegmentedControl
+          fullWidth
+          color="var(--app-control-active)"
+          autoContrast
+          withItemsBorders={false}
           value={extractChapterMode}
-          onChange={(value) =>
-            onExtractChapterModeChange(value as ExtractChapterMode)
-          }
+          onChange={(value) => onExtractChapterModeChange(value as ExtractChapterMode)}
           data={[
             { value: "auto", label: "Auto (fast)" },
             { value: "ai", label: "AI" },
           ]}
         />
-      </div>
+      </section>
 
-      <div>
-        <Switch
-          checked={narrateWithAI}
-          onChange={(e) => onNarrateWithAIChange(e.currentTarget.checked)}
-          label="Narrate with AI"
-          description="Generate spoken narration using an AI voice."
-        />
+      <section className="border-b border-[var(--app-border-subtle)] py-6">
+        <div className="flex items-start justify-between gap-6">
+          <div>
+            <Text fw={600} c="var(--app-text)" mb={4}>
+              Narrate with AI
+            </Text>
+            <Text size="xs" c="var(--app-text-muted)">
+              Generate spoken narration using an AI voice.
+            </Text>
+          </div>
+          <Switch
+            mt={2}
+            checked={narrateWithAI}
+            onChange={(e) => onNarrateWithAIChange(e.currentTarget.checked)}
+            aria-label="Narrate with AI"
+          />
+        </div>
         {narrateWithAI ? (
           <Select
-            mt="sm"
+            mt="md"
             label="Narration style"
             data={narrateOptions}
             value={narrateStyle}
             allowDeselect={false}
-            onChange={(value) =>
-              onNarrateStyleChange((value as NarrateStyle) ?? "neutral")
-            }
+            onChange={(value) => onNarrateStyleChange((value as NarrateStyle) ?? "neutral")}
           />
         ) : null}
-      </div>
+      </section>
 
-      <div>
-        <Text fw={600} c="var(--app-text)" mb="xs">
+      <section className="pt-6">
+        <Text fw={600} c="var(--app-text)" mb={4}>
           Default models
+        </Text>
+        <Text size="xs" c="var(--app-text-muted)" mb="md">
+          Models used for conversation and chapter extraction.
         </Text>
         <Stack gap="sm">
           <Select
@@ -128,7 +141,7 @@ export function DefaultsPanel({
             }
           />
         </Stack>
-      </div>
+      </section>
     </Stack>
   );
 }

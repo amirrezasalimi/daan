@@ -98,7 +98,10 @@ export async function detectChaptersWithAI(
       const next = markers[i + 1];
       const end = next ? next.startPage - 1 : pages.length;
       const safeEnd = Math.max(start, end);
-      const content = pages.slice(start - 1, safeEnd).join("\n\n").trim();
+      const content = pages
+        .slice(start - 1, safeEnd)
+        .join("\n\n")
+        .trim();
       chapters.push({ title: marker.title, startPage: start, endPage: safeEnd, content });
     }
     return chapters;

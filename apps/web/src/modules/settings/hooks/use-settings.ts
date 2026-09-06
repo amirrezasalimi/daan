@@ -25,8 +25,7 @@ export function useUpdateSettings() {
 
 export function useListModels() {
   return useMutation({
-    mutationFn: (input: { endpoint: string; apiKey: string }) =>
-      client.settings.listModels(input),
+    mutationFn: (input: { endpoint: string; apiKey: string }) => client.settings.listModels(input),
     onError: (error: Error) => {
       toast.error(error.message || "Failed to load models");
     },

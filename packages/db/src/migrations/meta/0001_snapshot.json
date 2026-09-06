@@ -70,9 +70,7 @@
       "indexes": {
         "book_type_idx": {
           "name": "book_type_idx",
-          "columns": [
-            "type"
-          ],
+          "columns": ["type"],
           "isUnique": false
         }
       },
@@ -147,10 +145,7 @@
       "indexes": {
         "book_chapter_book_id_idx": {
           "name": "book_chapter_book_id_idx",
-          "columns": [
-            "book_id",
-            "index"
-          ],
+          "columns": ["book_id", "index"],
           "isUnique": false
         }
       },
@@ -159,12 +154,8 @@
           "name": "book_chapter_book_id_book_id_fk",
           "tableFrom": "book_chapter",
           "tableTo": "book",
-          "columnsFrom": [
-            "book_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["book_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -232,17 +223,12 @@
       "indexes": {
         "book_chapter_content_chapter_id_idx": {
           "name": "book_chapter_content_chapter_id_idx",
-          "columns": [
-            "chapter_id",
-            "index"
-          ],
+          "columns": ["chapter_id", "index"],
           "isUnique": false
         },
         "book_chapter_content_book_id_idx": {
           "name": "book_chapter_content_book_id_idx",
-          "columns": [
-            "book_id"
-          ],
+          "columns": ["book_id"],
           "isUnique": false
         }
       },
@@ -251,12 +237,8 @@
           "name": "book_chapter_content_book_id_book_id_fk",
           "tableFrom": "book_chapter_content",
           "tableTo": "book",
-          "columnsFrom": [
-            "book_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["book_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -264,12 +246,8 @@
           "name": "book_chapter_content_chapter_id_book_chapter_id_fk",
           "tableFrom": "book_chapter_content",
           "tableTo": "book_chapter",
-          "columnsFrom": [
-            "chapter_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["chapter_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

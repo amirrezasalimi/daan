@@ -47,8 +47,8 @@ export function BookList({ books }: BookListProps) {
         overlayProps={{ backgroundOpacity: 0.4, blur: 2 }}
       >
         <Text size="sm" c="var(--app-text-muted)">
-          This will permanently delete “{bookToDelete?.title}” and all of its
-          chapters and extracted content. This action cannot be undone.
+          This will permanently delete “{bookToDelete?.title}” and all of its chapters and extracted
+          content. This action cannot be undone.
         </Text>
         <Group justify="flex-end" mt="xl">
           <Button

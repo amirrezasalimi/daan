@@ -37,19 +37,29 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
       title="Settings"
       size="60rem"
       radius="lg"
+      padding={0}
       centered
-      overlayProps={{ backgroundOpacity: 0.4, blur: 2 }}
       styles={{
         content: {
           height: MODAL_HEIGHT,
           display: "flex",
           flexDirection: "column",
         },
+        header: {
+          minHeight: "4.5rem",
+          padding: "1.25rem 1.5rem",
+        },
+        title: {
+          color: "var(--app-text)",
+          fontSize: "1.125rem",
+          fontWeight: 600,
+        },
         body: {
           flex: 1,
           minHeight: 0,
           display: "flex",
           flexDirection: "column",
+          padding: 0,
         },
       }}
     >
@@ -60,7 +70,7 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
           orientation="vertical"
           className="flex min-h-0 flex-1"
           styles={{
-            list: { borderInlineEnd: "none", gap: "0.25rem" },
+            list: { gap: "0.25rem" },
             tab: {
               justifyContent: "flex-start",
               textAlign: "left",
@@ -73,17 +83,20 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
             tabLabel: { textAlign: "left", flex: 1 },
           }}
         >
-          <Tabs.List w={200} className="shrink-0" pr="sm">
+          <Tabs.List
+            w={208}
+            className="shrink-0 border-r border-[var(--app-border-subtle)] px-4 py-5"
+          >
             <Tabs.Tab
               value="services"
-              className="data-[active]:bg-[var(--app-surface-muted)] data-[active]:font-medium data-[active]:!border-l-[var(--app-accent)]"
+              className="px-4 py-3 text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-muted)] data-[active]:bg-[var(--app-surface-muted)] data-[active]:font-medium data-[active]:text-[var(--app-text)] data-[active]:!border-l-[var(--app-accent)]"
               leftSection={<Server size={16} strokeWidth={1.5} />}
             >
               LLM services
             </Tabs.Tab>
             <Tabs.Tab
               value="defaults"
-              className="data-[active]:bg-[var(--app-surface-muted)] data-[active]:font-medium data-[active]:!border-l-[var(--app-accent)]"
+              className="px-4 py-3 text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-muted)] data-[active]:bg-[var(--app-surface-muted)] data-[active]:font-medium data-[active]:text-[var(--app-text)] data-[active]:!border-l-[var(--app-accent)]"
               leftSection={<SlidersHorizontal size={16} strokeWidth={1.5} />}
             >
               Defaults
@@ -91,35 +104,33 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
           </Tabs.List>
 
           <Tabs.Panel value="services" className="min-h-0 flex-1">
-            <ScrollArea h="100%" px="lg" type="auto">
-              <LlmServicesPanel
-                services={draft.llmServices}
-                onChange={(llmServices) => setDraft({ ...draft, llmServices })}
-              />
+            <ScrollArea h="100%" type="auto">
+              <div className="p-6">
+                <LlmServicesPanel
+                  services={draft.llmServices}
+                  onChange={(llmServices) => setDraft({ ...draft, llmServices })}
+                />
+              </div>
             </ScrollArea>
           </Tabs.Panel>
 
           <Tabs.Panel value="defaults" className="min-h-0 flex-1">
-            <ScrollArea h="100%" px="lg" type="auto">
-              <DefaultsPanel
-                services={draft.llmServices}
-                extractChapterMode={draft.extractChapterMode}
-                narrateWithAI={draft.narrateWithAI}
-                narrateStyle={draft.narrateStyle}
-                defaultModels={draft.defaultModels}
-                onExtractChapterModeChange={(extractChapterMode) =>
-                  setDraft({ ...draft, extractChapterMode })
-                }
-                onNarrateWithAIChange={(narrateWithAI) =>
-                  setDraft({ ...draft, narrateWithAI })
-                }
-                onNarrateStyleChange={(narrateStyle) =>
-                  setDraft({ ...draft, narrateStyle })
-                }
-                onDefaultModelsChange={(defaultModels) =>
-                  setDraft({ ...draft, defaultModels })
-                }
-              />
+            <ScrollArea h="100%" type="auto">
+              <div className="p-6">
+                <DefaultsPanel
+                  services={draft.llmServices}
+                  extractChapterMode={draft.extractChapterMode}
+                  narrateWithAI={draft.narrateWithAI}
+                  narrateStyle={draft.narrateStyle}
+                  defaultModels={draft.defaultModels}
+                  onExtractChapterModeChange={(extractChapterMode) =>
+                    setDraft({ ...draft, extractChapterMode })
+                  }
+                  onNarrateWithAIChange={(narrateWithAI) => setDraft({ ...draft, narrateWithAI })}
+                  onNarrateStyleChange={(narrateStyle) => setDraft({ ...draft, narrateStyle })}
+                  onDefaultModelsChange={(defaultModels) => setDraft({ ...draft, defaultModels })}
+                />
+              </div>
             </ScrollArea>
           </Tabs.Panel>
         </Tabs>
@@ -127,8 +138,8 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
 
       <Group
         justify="flex-end"
-        pt="md"
-        className="shrink-0 border-t border-[var(--app-border-subtle)]"
+        gap="sm"
+        className="shrink-0 border-t border-[var(--app-border-subtle)] px-6 py-4"
       >
         <Button variant="default" onClick={onClose}>
           Cancel

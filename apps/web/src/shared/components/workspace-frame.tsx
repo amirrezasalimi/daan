@@ -1,6 +1,6 @@
 import { ActionIcon, Text } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
-import { Bell, ChevronLeft, ChevronRight, Settings, UserRound } from "lucide-react";
+import { Settings } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
 import { SettingsModal } from "@/modules/settings";
@@ -27,81 +27,66 @@ export function WorkspaceFrame({
   return (
     <>
       <SettingsModal opened={settingsOpen} onClose={() => setSettingsOpen(false)} />
-    <main className="h-dvh min-h-0 overflow-hidden bg-[var(--app-canvas)]">
-      <section className="grid h-full w-full grid-rows-[auto_1fr] overflow-hidden bg-[var(--app-surface)]">
-        <header className="border-b border-[var(--app-border-subtle)] bg-[var(--app-surface)] px-5 py-3.5 sm:px-7">
-          <div className="grid grid-cols-[1fr_auto] items-center gap-4 lg:grid-cols-[1fr_1.5fr_1fr]">
-            <Link
-              to="/"
-              className="app-display w-fit text-xl tracking-[-0.04em] text-[var(--app-text)] no-underline"
-            >
-              DAAN
-            </Link>
+      <main className="h-dvh min-h-0 overflow-hidden bg-[var(--app-canvas)]">
+        <section className="grid h-full w-full grid-rows-[auto_1fr] overflow-hidden bg-[var(--app-surface)]">
+          <header className="border-b border-[var(--app-border-subtle)] bg-[var(--app-surface)] px-5 py-3.5 sm:px-7">
+            <div className="grid grid-cols-[1fr_auto] items-center gap-4 lg:grid-cols-[1fr_1.5fr_1fr]">
+              <Link
+                to="/"
+                className="app-display w-fit text-xl tracking-[-0.04em] text-[var(--app-text)] no-underline"
+              >
+                DAAN
+              </Link>
 
-            <div className="hidden min-w-0 text-sm text-[var(--app-text-muted)] lg:block">
-              {breadcrumb}
-            </div>
+              <div className="hidden min-w-0 text-sm text-[var(--app-text-muted)] lg:block">
+                {breadcrumb}
+              </div>
 
-            <div className="flex items-center justify-end gap-2">
-              <div className="hidden items-center gap-2 sm:flex">
-                <ActionIcon variant="default" size="lg" aria-label="Go back">
-                  <ChevronLeft size={17} strokeWidth={1.5} />
-                </ActionIcon>
-                <ActionIcon variant="default" size="lg" aria-label="Go forward">
-                  <ChevronRight size={17} strokeWidth={1.5} />
+              <div className="flex items-center justify-end gap-2">
+                <ModeToggle />
+                <ActionIcon
+                  variant="default"
+                  size="lg"
+                  aria-label="Settings"
+                  onClick={() => setSettingsOpen(true)}
+                >
+                  <Settings size={17} strokeWidth={1.5} />
                 </ActionIcon>
               </div>
-              <span className="mx-1 hidden h-6 w-px bg-[var(--app-border-subtle)] sm:block" />
-              <ActionIcon variant="subtle" color="brand" size="lg" aria-label="Notifications">
-                <Bell size={18} strokeWidth={1.5} />
-              </ActionIcon>
-              <ModeToggle />
-              <ActionIcon
-                variant="default"
-                size="lg"
-                aria-label="Settings"
-                onClick={() => setSettingsOpen(true)}
-              >
-                <Settings size={17} strokeWidth={1.5} />
-              </ActionIcon>
-              <ActionIcon variant="default" size="lg" aria-label="Account">
-                <UserRound size={17} strokeWidth={1.5} />
-              </ActionIcon>
             </div>
-          </div>
-        </header>
-
-        <div
-          className={`grid min-h-0 ${
-            sidebar && inspector
-              ? "lg:grid-cols-[15rem_minmax(0,1fr)_18rem]"
-              : sidebar
-                ? "lg:grid-cols-[15rem_minmax(0,1fr)]"
-                : inspector
-                  ? "lg:grid-cols-[minmax(0,1fr)_18rem]"
-                  : "grid-cols-1"
-          }`}
-        >
-          {sidebar ? (
-            <aside className="hidden min-h-0 border-r border-[var(--app-border-subtle)] bg-[var(--app-surface)] p-6 lg:block">
-              {sidebar}
-            </aside>
-          ) : null}
+          </header>
 
           <div
-            className={`min-h-0 min-w-0 ${contentScrollable ? "overflow-y-auto" : "overflow-hidden"}`}
+            className={`grid min-h-0 ${
+              sidebar && inspector
+                ? "lg:grid-cols-[15rem_minmax(0,1fr)_18rem]"
+                : sidebar
+                  ? "lg:grid-cols-[15rem_minmax(0,1fr)]"
+                  : inspector
+                    ? "lg:grid-cols-[minmax(0,1fr)_18rem]"
+                    : "grid-cols-1"
+            }`}
           >
-            {children}
-          </div>
+            {sidebar ? (
+              <aside className="hidden min-h-0 border-r border-[var(--app-border-subtle)] bg-[var(--app-surface)] p-6 lg:block">
+                {sidebar}
+              </aside>
+            ) : null}
 
-          {inspector ? (
-            <aside className="hidden min-h-0 overflow-y-auto border-l border-[var(--app-border-subtle)] bg-[var(--app-surface)] p-6 lg:block">
-              {inspector}
-            </aside>
-          ) : null}
-        </div>
-      </section>
-    </main>
+            <div
+              className={`min-h-0 min-w-0 ${contentScrollable ? "overflow-y-auto" : "overflow-hidden"}`}
+            >
+              {children}
+            </div>
+
+            {inspector ? (
+              <aside className="hidden min-h-0 overflow-y-auto border-l border-[var(--app-border-subtle)] bg-[var(--app-surface)] p-6 lg:block">
+                {inspector}
+              </aside>
+            ) : null}
+          </div>
+        </section>
+      </main>
     </>
   );
 }

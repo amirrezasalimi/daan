@@ -1,24 +1,40 @@
-import { ScrollArea, Text, TextInput } from "@mantine/core";
+import { ActionIcon, ScrollArea, Text, TextInput, Tooltip } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
-import { Search, X } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Search, X } from "lucide-react";
 import { useState } from "react";
 
-import {
-  type BookChapter,
-  useChapterSearchQuery,
-} from "../hooks/use-book";
+import { type BookChapter, useChapterSearchQuery } from "../hooks/use-book";
 
 interface ChapterNavProps {
   bookId: string;
   chapters: BookChapter[];
   activeId: string | null;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
   onSelect: (id: string, matchedTerms: string[]) => void;
+}
+
+function formatChapterTitle(title: string): string {
+  const letters = title.match(/\p{L}/gu) ?? [];
+  const uppercaseLetters = title.match(/\p{Lu}/gu) ?? [];
+  if (letters.length === 0 || uppercaseLetters.length / letters.length < 0.8) {
+    return title;
+  }
+
+  return title
+    .toLocaleLowerCase()
+    .replace(
+      /(^|[^\p{L}\p{N}])(\p{L})/gu,
+      (_, prefix: string, letter: string) => `${prefix}${letter.toLocaleUpperCase()}`,
+    );
 }
 
 export function ChapterNav({
   bookId,
   chapters,
   activeId,
+  collapsed,
+  onToggleCollapse,
   onSelect,
 }: ChapterNavProps) {
   const [query, setQuery] = useState("");
@@ -26,6 +42,50 @@ export function ChapterNav({
   const search = useChapterSearchQuery(bookId, debouncedQuery);
   const searching = query.trim().length > 0;
   const results = search.data ?? [];
+
+  if (collapsed) {
+    return (
+      <div className="flex h-full min-h-0 flex-col items-center">
+        <Tooltip label="Expand chapters" position="right">
+          <ActionIcon
+            variant="subtle"
+            color="brand"
+            aria-label="Expand chapters"
+            onClick={onToggleCollapse}
+          >
+            <PanelLeftOpen size={17} strokeWidth={1.6} />
+          </ActionIcon>
+        </Tooltip>
+
+        <ScrollArea className="mt-4 min-h-0 flex-1" type="hover" scrollbars="y">
+          <div className="grid gap-1">
+            {chapters.map((chapter, index) => {
+              const active = chapter.id === activeId;
+              return (
+                <Tooltip
+                  key={chapter.id}
+                  label={formatChapterTitle(chapter.title)}
+                  position="right"
+                >
+                  <button
+                    type="button"
+                    onClick={() => onSelect(chapter.id, [])}
+                    className={`flex h-9 w-9 items-center justify-center rounded-lg text-xs tabular-nums transition-colors ${
+                      active
+                        ? "bg-[var(--app-surface-muted)] font-medium text-[var(--app-text)]"
+                        : "text-[var(--app-text-subtle)] hover:bg-[var(--app-surface-muted)] hover:text-[var(--app-text)]"
+                    }`}
+                  >
+                    {String(index + 1).padStart(2, "0")}
+                  </button>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </ScrollArea>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -55,17 +115,28 @@ export function ChapterNav({
       />
 
       <div className="flex items-center justify-between px-1 pb-3 pt-5">
-        <Text className="app-eyebrow">
-          {searching ? "Search results" : "Chapters"}
-        </Text>
-        {searching && !search.isFetching ? (
-          <Text size="xs" c="var(--app-text-subtle)">
-            {results.length}
-          </Text>
-        ) : null}
+        <Text className="app-eyebrow">{searching ? "Search results" : "Chapters"}</Text>
+        <div className="flex items-center gap-2">
+          {searching && !search.isFetching ? (
+            <Text size="xs" c="var(--app-text-subtle)">
+              {results.length}
+            </Text>
+          ) : null}
+          <Tooltip label="Collapse chapters" position="left">
+            <ActionIcon
+              size="sm"
+              variant="subtle"
+              color="brand"
+              aria-label="Collapse chapters"
+              onClick={onToggleCollapse}
+            >
+              <PanelLeftClose size={16} strokeWidth={1.6} />
+            </ActionIcon>
+          </Tooltip>
+        </div>
       </div>
 
-      <ScrollArea className="min-h-0 flex-1" type="hover">
+      <ScrollArea className="min-h-0 flex-1" type="hover" scrollbars="y">
         <div className="grid gap-1 pr-2">
           {searching ? (
             results.length === 0 && !search.isFetching ? (
@@ -79,9 +150,7 @@ export function ChapterNav({
                   <button
                     key={result.chapterId}
                     type="button"
-                    onClick={() =>
-                      onSelect(result.chapterId, result.matchedTerms)
-                    }
+                    onClick={() => onSelect(result.chapterId, result.matchedTerms)}
                     className={`w-full rounded-xl px-3 py-2.5 text-left transition-colors ${
                       active
                         ? "bg-[var(--app-surface-muted)] text-[var(--app-text)]"
@@ -89,7 +158,7 @@ export function ChapterNav({
                     }`}
                   >
                     <span className="block truncate text-sm font-medium">
-                      {result.title}
+                      {formatChapterTitle(result.title)}
                     </span>
                     <span className="mt-1 line-clamp-2 block text-xs leading-5 text-[var(--app-text-subtle)]">
                       {result.excerpt}
@@ -120,7 +189,7 @@ export function ChapterNav({
                     <span className="text-xs text-[var(--app-text-subtle)] tabular-nums">
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    <span className="truncate">{chapter.title}</span>
+                    <span className="truncate">{formatChapterTitle(chapter.title)}</span>
                   </span>
                 </button>
               );

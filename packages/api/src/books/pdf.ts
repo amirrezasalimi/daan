@@ -1,9 +1,4 @@
-import {
-  extractTextItems,
-  getDocumentProxy,
-  getMeta,
-  type StructuredTextItem,
-} from "unpdf";
+import { extractTextItems, getDocumentProxy, getMeta, type StructuredTextItem } from "unpdf";
 
 import { cleanChapterTitle } from "./chapter-title";
 import { formatPdfPages } from "./pdf-format";
@@ -20,11 +15,8 @@ interface OutlineMarker {
   title: string;
   startPage: number;
   depth: number;
+  hasChildren: boolean;
 }
-
-const OUTLINE_EXCLUDED = /^(cover|title page|copyright|contents?|table of contents)$/i;
-const OUTLINE_CHAPTER = /^(chapter|part|book|section)\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\b/i;
-const OUTLINE_NAMED = /^(prologue|epilogue|introduction|foreword|preface|afterword|conclusion|appendix)\b/i;
 
 async function resolveDestPage(
   pdf: Awaited<ReturnType<typeof getDocumentProxy>>,
@@ -54,10 +46,15 @@ async function flattenOutline(
   const markers: OutlineMarker[] = [];
   for (const node of nodes) {
     const title = node.title?.replace(/\s+/g, " ").trim();
-    if (title && !OUTLINE_EXCLUDED.test(title)) {
+    if (title) {
       const pageIndex = await resolveDestPage(pdf, node.dest);
       if (pageIndex != null) {
-        markers.push({ title, startPage: pageIndex + 1, depth });
+        markers.push({
+          title,
+          startPage: pageIndex + 1,
+          depth,
+          hasChildren: Boolean(node.items?.length),
+        });
       }
     }
     if (node.items?.length) {
@@ -67,30 +64,62 @@ async function flattenOutline(
   return markers;
 }
 
-/** Select the outline level most likely to contain actual chapters. */
-function selectOutlineLevel(markers: OutlineMarker[]): OutlineMarker[] {
-  const byDepth = new Map<number, OutlineMarker[]>();
-  for (const marker of markers) {
-    const group = byDepth.get(marker.depth) ?? [];
-    group.push(marker);
-    byDepth.set(marker.depth, group);
-  }
+function normalizedTokens(text: string): Set<string> {
+  const tokens = text
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()
+    .split(/\s+/)
+    .filter((token) => token.length > 1 && !/^\d+$/.test(token));
+  return new Set(tokens);
+}
 
-  let best: OutlineMarker[] = [];
-  let bestScore = -Infinity;
-  for (const [depth, group] of byDepth) {
-    if (group.length < 2) continue;
-    const explicit = group.filter((marker) => OUTLINE_CHAPTER.test(marker.title)).length;
-    const named = group.filter((marker) => OUTLINE_NAMED.test(marker.title)).length;
-    const semanticRatio = (explicit + named) / group.length;
-    const score = explicit * 5 + named * 3 + Math.min(group.length, 20)
-      + semanticRatio * 5 - depth;
-    if (score > bestScore) {
-      best = group;
-      bestScore = score;
+function tokenOverlap(left: Set<string>, right: Set<string>): number {
+  if (left.size === 0 || right.size === 0) return 0;
+  let common = 0;
+  for (const token of left) {
+    if (right.has(token)) common += 1;
+  }
+  return common / Math.min(left.size, right.size);
+}
+
+function looksLikeOutlineIndexPage(
+  text: string,
+  pageNumber: number,
+  markers: OutlineMarker[],
+): boolean {
+  const lines = text
+    .split("\n")
+    .map((line) => normalizedTokens(line))
+    .filter((tokens) => tokens.size >= 2);
+  if (lines.length < 5) return false;
+
+  const referencedTitles = markers
+    .filter((marker) => marker.startPage !== pageNumber)
+    .map((marker) => normalizedTokens(marker.title))
+    .filter((tokens) => tokens.size >= 2);
+  let matches = 0;
+  for (const line of lines) {
+    if (referencedTitles.some((title) => tokenOverlap(line, title) >= 0.65)) {
+      matches += 1;
     }
   }
-  return best;
+  return matches >= 4 && matches / lines.length >= 0.2;
+}
+
+/** Select structural bookmark leaves without interpreting their language. */
+function selectOutlineMarkers(markers: OutlineMarker[], pageTexts: string[]): OutlineMarker[] {
+  const leaves = markers.filter((marker) => !marker.hasChildren);
+  const candidates = leaves.length >= 2 ? leaves : markers;
+  const openingPageLimit = Math.max(2, Math.floor(pageTexts.length * 0.01));
+
+  return candidates.filter((marker) => {
+    const pageText = pageTexts[marker.startPage - 1] ?? "";
+    if (looksLikeOutlineIndexPage(pageText, marker.startPage, markers)) return false;
+    const isSparseOpeningPage =
+      marker.startPage <= openingPageLimit && pageText.replace(/\s/g, "").length < 240;
+    return !isSparseOpeningPage;
+  });
 }
 
 function buildChaptersFromMarkers(
@@ -99,21 +128,20 @@ function buildChaptersFromMarkers(
 ): DetectedChapter[] | null {
   const ordered = markers
     .sort((a, b) => a.startPage - b.startPage)
-    .filter((marker, index, all) =>
-      index === 0 || marker.startPage !== all[index - 1]?.startPage,
-    );
+    .filter((marker, index, all) => index === 0 || marker.startPage !== all[index - 1]?.startPage);
   if (ordered.length < 2) return null;
 
   return ordered.map((marker, index) => {
     const next = ordered[index + 1];
-    const endPage = next
-      ? Math.max(marker.startPage, next.startPage - 1)
-      : pageTexts.length;
+    const endPage = next ? Math.max(marker.startPage, next.startPage - 1) : pageTexts.length;
     return {
       title: cleanChapterTitle(marker.title),
       startPage: marker.startPage,
       endPage,
-      content: pageTexts.slice(marker.startPage - 1, endPage).join("\n\n").trim(),
+      content: pageTexts
+        .slice(marker.startPage - 1, endPage)
+        .join("\n\n")
+        .trim(),
     };
   });
 }
@@ -125,7 +153,7 @@ async function chaptersFromOutline(
   const outline = (await pdf.getOutline()) as OutlineNode[] | null;
   if (!outline?.length) return null;
   const flattened = await flattenOutline(pdf, outline);
-  return buildChaptersFromMarkers(selectOutlineLevel(flattened), pageTexts);
+  return buildChaptersFromMarkers(selectOutlineMarkers(flattened, pageTexts), pageTexts);
 }
 
 function textFromItems(items: StructuredTextItem[]): string {
@@ -159,8 +187,7 @@ export async function parsePdf(data: Uint8Array): Promise<ParsedBook> {
   }
 
   const detectedChapters =
-    (await chaptersFromOutline(pdf, pages))
-    ?? detectChaptersFromLayout(items, pages);
+    (await chaptersFromOutline(pdf, pages)) ?? detectChaptersFromLayout(items, pages);
   const formattedPages = formatPdfPages(items);
   const chapters = detectedChapters.map((chapter) => ({
     ...chapter,

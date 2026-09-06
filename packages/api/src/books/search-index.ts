@@ -67,10 +67,7 @@ async function buildBookIndex(bookId: string): Promise<CachedBookIndex> {
       content: bookChapterContent.content,
     })
     .from(bookChapter)
-    .leftJoin(
-      bookChapterContent,
-      eq(bookChapterContent.chapterId, bookChapter.id),
-    )
+    .leftJoin(bookChapterContent, eq(bookChapterContent.chapterId, bookChapter.id))
     .where(eq(bookChapter.bookId, bookId))
     .orderBy(asc(bookChapter.index), asc(bookChapterContent.index));
 
@@ -78,9 +75,7 @@ async function buildBookIndex(bookId: string): Promise<CachedBookIndex> {
   for (const row of rows) {
     const existing = documents.get(row.id);
     if (existing) {
-      existing.content = `${existing.content}\n${contentToPlainText(
-        row.content ?? "",
-      )}`.trim();
+      existing.content = `${existing.content}\n${contentToPlainText(row.content ?? "")}`.trim();
       continue;
     }
     documents.set(row.id, {
@@ -131,9 +126,7 @@ export async function searchBookChapters(
     boost: { title: 4 },
     combineWith: isPhrase ? "AND" : "OR",
     prefix: !isPhrase,
-    fuzzy: isPhrase
-      ? false
-      : (term) => (term.length >= 5 ? 0.2 : false),
+    fuzzy: isPhrase ? false : (term) => (term.length >= 5 ? 0.2 : false),
   });
 
   return candidates
