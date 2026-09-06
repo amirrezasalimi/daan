@@ -1,11 +1,12 @@
 import type { AppConfig } from "@daan/api/config/schema";
 import { Button, Group, Modal, ScrollArea, Tabs } from "@mantine/core";
-import { Server, SlidersHorizontal } from "lucide-react";
+import { AudioLines, Server, SlidersHorizontal } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useSettingsQuery, useUpdateSettings } from "../hooks/use-settings";
-import { DefaultsPanel } from "./defaults-panel";
+import { GeneralPanel } from "./general-panel";
 import { LlmServicesPanel } from "./llm-services-panel";
+import { NarrationServicesPanel } from "./narration-services-panel";
 
 interface SettingsModalProps {
   opened: boolean;
@@ -95,11 +96,18 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
               LLM services
             </Tabs.Tab>
             <Tabs.Tab
-              value="defaults"
+              value="narration"
+              className="px-4 py-3 text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-muted)] data-[active]:bg-[var(--app-surface-muted)] data-[active]:font-medium data-[active]:text-[var(--app-text)] data-[active]:!border-l-[var(--app-accent)]"
+              leftSection={<AudioLines size={16} strokeWidth={1.5} />}
+            >
+              Narration
+            </Tabs.Tab>
+            <Tabs.Tab
+              value="general"
               className="px-4 py-3 text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-muted)] data-[active]:bg-[var(--app-surface-muted)] data-[active]:font-medium data-[active]:text-[var(--app-text)] data-[active]:!border-l-[var(--app-accent)]"
               leftSection={<SlidersHorizontal size={16} strokeWidth={1.5} />}
             >
-              Defaults
+              General
             </Tabs.Tab>
           </Tabs.List>
 
@@ -114,11 +122,28 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
             </ScrollArea>
           </Tabs.Panel>
 
-          <Tabs.Panel value="defaults" className="min-h-0 flex-1">
+          <Tabs.Panel value="narration" className="min-h-0 flex-1">
             <ScrollArea h="100%" type="auto">
               <div className="p-6">
-                <DefaultsPanel
+                <NarrationServicesPanel
+                  services={draft.ttsServices}
+                  proxy={draft.socks5Proxy}
+                  defaultModel={draft.defaultTtsModel}
+                  onServicesChange={(ttsServices) => setDraft({ ...draft, ttsServices })}
+                  onDefaultModelChange={(defaultTtsModel) =>
+                    setDraft({ ...draft, defaultTtsModel })
+                  }
+                />
+              </div>
+            </ScrollArea>
+          </Tabs.Panel>
+
+          <Tabs.Panel value="general" className="min-h-0 flex-1">
+            <ScrollArea h="100%" type="auto">
+              <div className="p-6">
+                <GeneralPanel
                   services={draft.llmServices}
+                  proxy={draft.socks5Proxy}
                   extractChapterMode={draft.extractChapterMode}
                   narrateWithAI={draft.narrateWithAI}
                   narrateStyle={draft.narrateStyle}
@@ -129,6 +154,7 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
                   onNarrateWithAIChange={(narrateWithAI) => setDraft({ ...draft, narrateWithAI })}
                   onNarrateStyleChange={(narrateStyle) => setDraft({ ...draft, narrateStyle })}
                   onDefaultModelsChange={(defaultModels) => setDraft({ ...draft, defaultModels })}
+                  onProxyChange={(socks5Proxy) => setDraft({ ...draft, socks5Proxy })}
                 />
               </div>
             </ScrollArea>

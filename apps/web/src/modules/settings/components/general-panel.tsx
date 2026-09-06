@@ -4,12 +4,14 @@ import type {
   LlmServiceConfig,
   ModelRef,
   NarrateStyle,
+  Socks5ProxyConfig,
 } from "@daan/api/config/schema";
 import { NARRATE_STYLES } from "@daan/api/config/schema";
-import { SegmentedControl, Select, Stack, Switch, Text } from "@mantine/core";
+import { SegmentedControl, Select, Stack, Switch, Text, TextInput } from "@mantine/core";
 
-interface DefaultsPanelProps {
+interface GeneralPanelProps {
   services: LlmServiceConfig[];
+  proxy: Socks5ProxyConfig;
   extractChapterMode: ExtractChapterMode;
   narrateWithAI: boolean;
   narrateStyle: NarrateStyle;
@@ -18,6 +20,7 @@ interface DefaultsPanelProps {
   onNarrateWithAIChange: (value: boolean) => void;
   onNarrateStyleChange: (style: NarrateStyle) => void;
   onDefaultModelsChange: (models: DefaultModels) => void;
+  onProxyChange: (proxy: Socks5ProxyConfig) => void;
 }
 
 function toValue(ref: ModelRef): string | null {
@@ -31,8 +34,9 @@ function fromValue(value: string | null): ModelRef {
   return { service: service ?? "", model: model ?? "" };
 }
 
-export function DefaultsPanel({
+export function GeneralPanel({
   services,
+  proxy,
   extractChapterMode,
   narrateWithAI,
   narrateStyle,
@@ -41,7 +45,8 @@ export function DefaultsPanel({
   onNarrateWithAIChange,
   onNarrateStyleChange,
   onDefaultModelsChange,
-}: DefaultsPanelProps) {
+  onProxyChange,
+}: GeneralPanelProps) {
   const modelOptions = services.flatMap((service) =>
     service.models.map((model) => ({
       value: `${service.id}::${model.id}`,
@@ -57,6 +62,34 @@ export function DefaultsPanel({
   return (
     <Stack gap={0}>
       <section className="border-b border-[var(--app-border-subtle)] pb-6">
+        <div className="flex items-start justify-between gap-6">
+          <div>
+            <Text fw={600} c="var(--app-text)" mb={4}>
+              SOCKS5 proxy
+            </Text>
+            <Text size="xs" c="var(--app-text-muted)">
+              Route supported server requests through one global proxy.
+            </Text>
+          </div>
+          <Switch
+            mt={2}
+            checked={proxy.enabled}
+            onChange={(event) => onProxyChange({ ...proxy, enabled: event.currentTarget.checked })}
+            aria-label="Enable SOCKS5 proxy"
+          />
+        </div>
+        {proxy.enabled ? (
+          <TextInput
+            mt="md"
+            label="Proxy URL"
+            placeholder="socks5h://127.0.0.1:10808"
+            value={proxy.url}
+            onChange={(event) => onProxyChange({ ...proxy, url: event.currentTarget.value })}
+          />
+        ) : null}
+      </section>
+
+      <section className="border-b border-[var(--app-border-subtle)] py-6">
         <Text fw={600} c="var(--app-text)" mb={4}>
           Chapter extraction
         </Text>

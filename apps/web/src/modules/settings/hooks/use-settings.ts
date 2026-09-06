@@ -23,6 +23,15 @@ export function useUpdateSettings() {
   });
 }
 
+export function useListDeepgramVoices() {
+  return useMutation({
+    mutationFn: (proxy: AppConfig["socks5Proxy"]) => client.settings.listDeepgramVoices(proxy),
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to load Deepgram voices");
+    },
+  });
+}
+
 export function useListModels() {
   return useMutation({
     mutationFn: (input: { endpoint: string; apiKey: string }) => client.settings.listModels(input),

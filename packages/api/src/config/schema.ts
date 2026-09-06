@@ -26,6 +26,42 @@ export const llmServiceSchema = z.object({
 });
 export type LlmServiceConfig = z.infer<typeof llmServiceSchema>;
 
+export const TTS_PROVIDERS = ["openai-compatible", "deepgram"] as const;
+export type TtsProvider = (typeof TTS_PROVIDERS)[number];
+
+export const ttsModelSchema = z.object({
+  name: z.string().min(1),
+  id: z.string().min(1),
+  voices: z.array(z.string().min(1)).default([]),
+});
+export type TtsModelConfig = z.infer<typeof ttsModelSchema>;
+
+export const ttsServiceSchema = z.object({
+  id: z
+    .string()
+    .min(1)
+    .default(() => crypto.randomUUID()),
+  name: z.string().min(1),
+  provider: z.enum(TTS_PROVIDERS),
+  endpoint: z.string().min(1),
+  apiKey: z.string().default(""),
+  models: z.array(ttsModelSchema).default([]),
+});
+export type TtsServiceConfig = z.infer<typeof ttsServiceSchema>;
+
+export const socks5ProxySchema = z.object({
+  enabled: z.boolean().default(false),
+  url: z.string().default("socks5h://127.0.0.1:10808"),
+});
+export type Socks5ProxyConfig = z.infer<typeof socks5ProxySchema>;
+
+export const ttsModelRefSchema = z.object({
+  service: z.string().default(""),
+  model: z.string().default(""),
+  voice: z.string().default(""),
+});
+export type TtsModelRef = z.infer<typeof ttsModelRefSchema>;
+
 /**
  * Narration/voice styles available for generated audio or reading.
  */
@@ -70,9 +106,15 @@ export type DefaultModels = z.infer<typeof defaultModelsSchema>;
  */
 export const appConfigSchema = z.object({
   llmServices: z.array(llmServiceSchema).default([]),
+  ttsServices: z.array(ttsServiceSchema).default([]),
+  socks5Proxy: socks5ProxySchema.default({
+    enabled: false,
+    url: "socks5h://127.0.0.1:10808",
+  }),
   extractChapterMode: z.enum(EXTRACT_CHAPTER_MODES).default("auto"),
   narrateWithAI: z.boolean().default(false),
   narrateStyle: z.enum(NARRATE_STYLES).default("neutral"),
+  defaultTtsModel: ttsModelRefSchema.default({ service: "", model: "", voice: "" }),
   defaultModels: defaultModelsSchema.default({
     chat: { service: "", model: "" },
     extractChapters: { service: "", model: "" },
@@ -82,9 +124,15 @@ export type AppConfig = z.infer<typeof appConfigSchema>;
 
 export const DEFAULT_CONFIG: AppConfig = {
   llmServices: [],
+  ttsServices: [],
+  socks5Proxy: {
+    enabled: false,
+    url: "socks5h://127.0.0.1:10808",
+  },
   extractChapterMode: "auto",
   narrateWithAI: false,
   narrateStyle: "neutral",
+  defaultTtsModel: { service: "", model: "", voice: "" },
   defaultModels: {
     chat: { service: "", model: "" },
     extractChapters: { service: "", model: "" },
