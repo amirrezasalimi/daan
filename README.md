@@ -65,6 +65,14 @@ bun run dev:desktop
 
 ---
 
+## Roadmap
+
+- [ ] **AI Chat with Book Content**: Converse with your books, ask questions, and explore ideas grounded directly in the text.
+- [ ] **Translate Content Before TTS**: On-the-fly translation of paragraphs into other languages prior to voice synthesis.
+- [ ] **Adaptive Narration Styles with LLM**: Restyle and adapt the narrative tone (e.g., dramatic, conversational, simplified, or storybook) using LLMs before generating audio.
+
+---
+
 ## License
 
 MIT
