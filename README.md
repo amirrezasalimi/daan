@@ -1,119 +1,70 @@
-# daan
+# Daan (دان)
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, TanStack Router, Hono, ORPC, and more.
+> An intelligent, distraction-free book reader and AI audiobook narrator.
+>
+> **Why "Daan"?** In Persian, **Daan** (دان) is the root of knowing and wisdom (*dānestan* / دانستن), and a vessel that holds knowledge.
 
-## Features
+---
 
-- **TypeScript** - For type safety and improved developer experience
-- **TanStack Router** - File-based routing with full type safety
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **Shared UI package** - shadcn/ui primitives live in `packages/ui`
-- **Hono** - Lightweight, performant server framework
-- **oRPC** - End-to-end type-safe APIs with OpenAPI integration
-- **Bun** - Runtime environment
-- **Drizzle** - TypeScript-first ORM
-- **SQLite/Turso** - Database engine
-- **Electrobun** - Lightweight desktop shell for web frontends
-- **Oxlint** - Oxlint + Oxfmt (linting & formatting)
-- **Vite+** - Unified Vite toolchain, workspace task runner, linting, and formatting
+## Highlights & Features
 
-## Getting Started
+- **Automatic Chapter & Content Detection**: Drag and drop PDF or EPUB files. Daan parses structure, chapter titles, headings, and text formatting automatically.
+- **AI-Powered Audio Narration**: Listen to any chapter with natural text-to-speech. Paragraphs are hashed, normalized, and pre-buffered using background workers.
+- **TTS Engine Flexibility**: Built-in support for **Deepgram Aura** and any **OpenAI-compatible** speech API, complete with voice previews and model search in Settings.
+- **Interactive Audio Reader**: Floating player with real-time seeking, volume control, paragraph highlight synchronization, click-to-narrate jumping, and persistent playback state per book.
+- **Fast Chapter Search**: Instant search through chapter titles and contents with debounced indexing and direct paragraph scrolling.
+- **Editorial, Eye-Friendly Design**: Warm, tactile typography designed for comfortable long-form reading, customizable dark/light themes, collapsible sidebar, and responsive layouts.
+- **Local-First & Private**: Books, chapters, and generated audio are stored locally on your machine with SQLite (Drizzle ORM) and Bunqueue. Optional system-wide SOCKS5 proxy support.
+- **Modern Monorepo Architecture**: Powered by Bun, React 19, Mantine UI v9, TanStack Router/Query, Hono, oRPC, and Electrobun for desktop.
 
-First, install the dependencies:
+---
+
+## Tech Stack
+
+- **Runtime & Package Manager**: [Bun](https://bun.sh)
+- **Frontend**: React 19, [Mantine UI v9](https://mantine.dev), Tailwind CSS, TanStack Router & Query
+- **Backend & RPC**: [Hono](https://hono.dev), [oRPC](https://orpc.unnoq.com)
+- **Database & Queue**: SQLite via [Drizzle ORM](https://orm.drizzle.team), [bunqueue](https://bunqueue.dev)
+- **Desktop Shell**: [Electrobun](https://electrobun.dev)
+- **Document Processing**: [unpdf](https://github.com/unjs/unpdf), custom EPUB/PDF parser
+
+---
+
+## Quick Start
+
+### 1. Prerequisites
+
+- [Bun](https://bun.sh) (v1.2+ recommended)
+
+### 2. Install Dependencies
 
 ```bash
 bun install
 ```
 
-## Database Setup
-
-This project uses SQLite with Drizzle ORM.
-
-1. Start the local SQLite database (optional):
-
-```bash
-bun run db:local
-```
-
-2. Update your `.env` file in the `apps/server` directory with the appropriate connection details if needed.
-
-3. Apply the schema to your database:
+### 3. Setup Database
 
 ```bash
 bun run db:push
 ```
 
-Then, run the development server:
+### 4. Run Development Server
 
 ```bash
 bun run dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
-The API is running at [http://localhost:3000](http://localhost:3000).
+- Web App: [http://localhost:3007](http://localhost:3007)
+- API Server: [http://localhost:3006](http://localhost:3006)
 
-## UI Customization
-
-React web apps in this stack share shadcn/ui primitives through `packages/ui`.
-
-- Change design tokens and global styles in `packages/ui/src/styles/globals.css`
-- Update shared primitives in `packages/ui/src/components/*`
-- Adjust shadcn aliases or style config in `packages/ui/components.json` and `apps/web/components.json`
-
-### Add more shared components
-
-Run this from the project root to add more primitives to the shared UI package:
+To run as a native desktop application:
 
 ```bash
-npx shadcn@latest add accordion dialog popover sheet table -c packages/ui
+bun run dev:desktop
 ```
 
-Import shared components like this:
+---
 
-```tsx
-import { Button } from "@daan/ui/components/button";
-```
+## License
 
-### Add app-specific blocks
-
-If you want to add app-specific blocks instead of shared primitives, run the shadcn CLI from `apps/web`.
-
-## Git Hooks and Formatting
-
-- Optional native Vite+ hooks: `bun run hooks:setup`
-- Docs: [Vite+ commit hooks](https://viteplus.dev/guide/commit-hooks)
-- Run checks: `bun run check`
-
-## Project Structure
-
-```
-daan/
-├── apps/
-│   ├── web/         # Frontend application (React + TanStack Router)
-│   └── server/      # Backend API (Hono, ORPC)
-├── packages/
-│   ├── ui/          # Shared shadcn/ui components and styles
-│   ├── api/         # API layer / business logic
-│   └── db/          # Database schema & queries
-```
-
-## Available Scripts
-
-- `bun run dev`: Start all applications in development mode
-- `bun run build`: Build all applications
-- `bun run dev:web`: Start only the web application
-- `bun run dev:server`: Start only the server
-- `bun run check-types`: Check TypeScript types across all apps
-- `bun run db:push`: Push schema changes to database
-- `bun run db:generate`: Generate database client/types
-- `bun run db:migrate`: Run database migrations
-- `bun run db:studio`: Open database studio UI
-- `bun run db:local`: Start the local SQLite database
-- `bun run check`: Run Vite+ format/lint checks and workspace TypeScript checks
-- `bun run lint`: Run Vite+ lint checks
-- `bun run format`: Run Vite+ formatting
-- `bun run staged`: Run Vite+ checks against staged files
-- `bun run hooks:setup`: Install Vite+ native Git hooks with `vp config`
-- `bun run dev:desktop`: Start the Electrobun desktop app with HMR
-- `bun run build:desktop`: Build the stable Electrobun desktop app
-- `bun run build:desktop:canary`: Build the canary Electrobun desktop app
+MIT
