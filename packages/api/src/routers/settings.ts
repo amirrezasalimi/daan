@@ -29,8 +29,20 @@ async function listDeepgramVoices(proxy: { enabled: boolean; url: string }): Pro
     });
     html = result.stdout;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Could not load Deepgram voices";
-    throw new Error(message);
+    const failure = error as NodeJS.ErrnoException & { stderr?: string };
+    const stderr = typeof failure.stderr === "string" ? failure.stderr : "";
+
+    if (proxy.enabled && stderr.includes("curl: (7)")) {
+      throw new Error(
+        "SOCKS5 proxy is enabled but unreachable. Check the proxy URL in General settings or disable it.",
+      );
+    }
+
+    if (stderr.includes("curl: (28)")) {
+      throw new Error("Deepgram voice discovery timed out. Check your network connection.");
+    }
+
+    throw new Error("Could not load Deepgram voices from the official documentation.");
   }
 
   const voices: string[] = [...new Set(html.match(/aura-[a-zA-Z0-9._-]+/g) ?? [])].sort();

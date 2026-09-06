@@ -105,6 +105,12 @@ export function NarrationServicesPanel({
           </Button>
         </Group>
 
+        {proxy.enabled ? (
+          <Text size="xs" c="var(--app-text-muted)">
+            Deepgram voice loading uses the SOCKS5 proxy configured in General.
+          </Text>
+        ) : null}
+
         <Select
           label="Default narration voice"
           description="Used when generating speech for a chapter."
