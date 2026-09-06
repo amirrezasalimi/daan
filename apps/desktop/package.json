@@ -1,0 +1,20 @@
+{
+  "name": "desktop",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "vp run --filter web build && electrobun dev",
+    "dev:hmr": "vp run --filter web build && concurrently \"bun run hmr\" \"electrobun dev --watch\"",
+    "hmr": "vp run -r dev",
+    "build": "vp run --filter web build && electrobun build",
+    "build:stable": "vp run --filter web build && electrobun build --env=stable",
+    "build:canary": "vp run --filter web build && electrobun build --env=canary",
+    "check-types": "electrobun prepare && tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "concurrently": "^10.0.5",
+    "electrobun": "^2.0.1",
+    "typescript": "catalog:"
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "name": "daan",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "catalog": {
+      "dotenv": "^17.4.2",
+      "zod": "^4.4.3",
+      "typescript": "^6.0.3",
+      "@types/bun": "^1.4.0",
+      "libsql": "0.5.29",
+      "hono": "^4.12.32",
+      "@orpc/server": "^1.14.12",
+      "@orpc/openapi": "^1.14.12",
+      "@orpc/zod": "^1.14.12",
+      "lucide-react": "^1.27.0",
+      "next-themes": "^0.4.6",
+      "react": "^19.2.8",
+      "react-dom": "^19.2.8",
+      "sonner": "^2.0.7",
+      "@orpc/client": "^1.14.12",
+      "@types/react": "^19.2.17",
+      "@types/react-dom": "^19.2.3",
+      "tailwindcss": "^4.3.3"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vp run -r dev",
+    "build": "vp run -r build --filter '!desktop' && vp run --filter desktop build",
+    "check-types": "vp run -r check-types",
+    "check": "oxlint && oxfmt --write",
+    "lint": "vp lint",
+    "format": "vp fmt",
+    "staged": "vp staged",
+    "hooks:setup": "vp config",
+    "dev:web": "vp run --filter web dev",
+    "dev:desktop": "vp run --filter desktop dev:hmr",
+    "build:desktop": "vp run --filter desktop build:stable",
+    "build:desktop:canary": "vp run --filter desktop build:canary",
+    "dev:server": "vp run --filter server dev",
+    "db:push": "vp run --filter @daan/db db:push",
+    "db:studio": "vp run --filter @daan/db db:studio",
+    "db:generate": "vp run --filter @daan/db db:generate",
+    "db:migrate": "vp run --filter @daan/db db:migrate",
+    "db:local": "vp run --filter @daan/db db:local"
+  },
+  "dependencies": {
+    "@daan/env": "workspace:*",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@daan/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "oxfmt": "^0.65.0",
+    "oxlint": "^1.80.0",
+    "rolldown": "1.2.6",
+    "typescript": "catalog:",
+    "vite-plus": "0.3.0"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.3.0"
+  },
+  "packageManager": "bun@1.4.0"
+}
