@@ -24,6 +24,11 @@
       "@orpc/client": "^1.14.12",
       "@types/react": "^19.2.17",
       "@types/react-dom": "^19.2.3",
+      "@mantine/core": "^9.6.0",
+      "@mantine/hooks": "^9.6.0",
+      "bunqueue": "^2.9.4",
+      "unpdf": "^1.8.1",
+      "openai": "^7.10.0",
       "tailwindcss": "^4.3.3"
     }
   },
@@ -37,6 +42,8 @@
     "format": "vp fmt",
     "staged": "vp staged",
     "hooks:setup": "vp config",
+    "docs:mantine": "curl -s https://mantine.dev/llms.txt -o docs/mantine/llms.txt",
+    "docs:bunqueue": "curl -s http://bunqueue.dev/llms.txt -o docs/bunqueue/llms.txt",
     "dev:web": "vp run --filter web dev",
     "dev:desktop": "vp run --filter desktop dev:hmr",
     "build:desktop": "vp run --filter desktop build:stable",

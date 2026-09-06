@@ -9,6 +9,7 @@ import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { shutdownQueues } from "./queue";
 
 const app = new Hono();
 
@@ -16,8 +17,9 @@ app.use(logger());
 app.use(
   "/*",
   cors({
-    origin: [env.CORS_ORIGIN, ...desktopOrigins],
+    origin: [env.CORS_ORIGIN, "http://localhost:3007", ...desktopOrigins],
     allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
@@ -70,4 +72,19 @@ app.get("/", (c) => {
   return c.text("OK");
 });
 
-export default app;
+const port = Number(process.env.PORT) || 3006;
+
+process.on("SIGINT", async () => {
+  await shutdownQueues();
+  process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+  await shutdownQueues();
+  process.exit(0);
+});
+
+export default {
+  port,
+  fetch: app.fetch,
+};

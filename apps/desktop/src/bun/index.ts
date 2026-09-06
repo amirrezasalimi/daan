@@ -1,6 +1,6 @@
 import { BrowserWindow, Updater } from "electrobun/main";
 
-const DEV_SERVER_PORT = 3001;
+const DEV_SERVER_PORT = 3007;
 const DEV_SERVER_URL = `http://localhost:${DEV_SERVER_PORT}`;
 
 async function getMainViewUrl(): Promise<string> {

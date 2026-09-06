@@ -18,6 +18,12 @@
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
     "dotenv": "catalog:",
+    "drizzle-orm": "^0.45.2",
+    "fflate": "^0.8.3",
+    "minisearch": "^7.2.0",
+    "openai": "catalog:",
+    "unpdf": "catalog:",
+    "yaml": "^2.9.0",
     "zod": "catalog:"
   },
   "devDependencies": {

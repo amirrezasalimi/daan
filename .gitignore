@@ -56,3 +56,6 @@ coverage
 .cache
 tmp
 temp
+
+# Local app configuration (contains API keys)
+config.yaml

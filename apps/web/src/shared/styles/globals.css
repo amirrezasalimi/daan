@@ -1,0 +1,112 @@
+@import "tailwindcss";
+@import "@mantine/core/styles.css";
+
+:root {
+  color-scheme: light;
+  --app-canvas: #fbf9f5;
+  --app-surface: #fffdf9;
+  --app-surface-muted: #eee9df;
+  --app-surface-raised: #ffffff;
+  --app-text: #292724;
+  --app-text-muted: #726d66;
+  --app-text-subtle: #99928a;
+  --app-border: #d9d2c8;
+  --app-border-subtle: #ebe6de;
+  --app-accent: #7a5b35;
+  --app-focus: #92704a;
+  --app-success: #4f755a;
+  --app-warning: #a46f2d;
+  --app-danger: #a24d45;
+  --app-grid: rgba(91, 86, 81, 0.075);
+  --app-content: 72rem;
+  --app-content-wide: 92rem;
+  --app-section-space: clamp(4rem, 9vw, 8rem);
+}
+
+[data-mantine-color-scheme="dark"] {
+  color-scheme: dark;
+  --app-canvas: #201e1c;
+  --app-surface: #292622;
+  --app-surface-muted: #34302b;
+  --app-surface-raised: #302c28;
+  --app-text: #f3eee6;
+  --app-text-muted: #bdb4a8;
+  --app-text-subtle: #8f877e;
+  --app-border: #4b453e;
+  --app-border-subtle: #39342f;
+  --app-accent: #d1b083;
+  --app-focus: #dfc29b;
+  --app-success: #89ad91;
+  --app-warning: #d5a15d;
+  --app-danger: #d98379;
+  --app-grid: rgba(238, 232, 223, 0.055);
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+html {
+  background: var(--app-canvas);
+}
+
+body {
+  min-width: 20rem;
+  color: var(--app-text);
+  background-color: var(--app-canvas);
+  background-image: radial-gradient(var(--app-grid) 0.7px, transparent 0.7px);
+  background-size: 8px 8px;
+}
+
+::selection {
+  color: var(--app-text);
+  background: color-mix(in srgb, var(--app-accent) 24%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--app-focus);
+  outline-offset: 3px;
+}
+
+.app-surface {
+  color: var(--app-text);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border-subtle);
+  box-shadow: var(--mantine-shadow-sm);
+}
+
+.app-editorial-grid {
+  background-color: var(--app-surface-muted);
+  background-image:
+    linear-gradient(var(--app-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--app-grid) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.app-display {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+}
+
+.app-eyebrow {
+  color: var(--app-text-muted);
+  font-size: var(--mantine-font-size-sm);
+  font-weight: var(--mantine-font-weight-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}

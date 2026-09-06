@@ -16,9 +16,12 @@
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
+    "bunqueue": "catalog:",
     "dotenv": "catalog:",
     "hono": "catalog:",
     "libsql": "catalog:",
+    "openai": "catalog:",
+    "unpdf": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
