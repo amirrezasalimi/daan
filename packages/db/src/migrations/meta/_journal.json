@@ -22,6 +22,20 @@
       "when": 1788715231564,
       "tag": "0002_clear_red_ghost",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1788720823243,
+      "tag": "0003_mushy_mandarin",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1788721264357,
+      "tag": "0004_wet_gamma_corps",
+      "breakpoints": true
     }
   ]
 }

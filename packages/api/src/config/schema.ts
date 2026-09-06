@@ -113,6 +113,7 @@ export const appConfigSchema = z.object({
   }),
   extractChapterMode: z.enum(EXTRACT_CHAPTER_MODES).default("auto"),
   narrateWithAI: z.boolean().default(false),
+  narrateAheadCount: z.number().int().min(0).max(20).default(3),
   narrateStyle: z.enum(NARRATE_STYLES).default("neutral"),
   defaultTtsModel: ttsModelRefSchema.default({ service: "", model: "", voice: "" }),
   defaultModels: defaultModelsSchema.default({
@@ -131,6 +132,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   },
   extractChapterMode: "auto",
   narrateWithAI: false,
+  narrateAheadCount: 3,
   narrateStyle: "neutral",
   defaultTtsModel: { service: "", model: "", voice: "" },
   defaultModels: {

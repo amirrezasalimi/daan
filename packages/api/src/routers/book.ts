@@ -4,6 +4,7 @@ import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { parseBookSource } from "../books";
+import { resetBookNarration, resetChapterContentNarration } from "../narration/service";
 import { cleanChapterTitle } from "../books/chapter-title";
 import { removeBookSource, storeBookSource } from "../books/source-storage";
 import { invalidateBookSearchIndex, searchBookChapters } from "../books/search-index";
@@ -62,6 +63,7 @@ export const bookRouter = {
       .from(book)
       .where(eq(book.id, input.id));
 
+    await resetBookNarration(input.id);
     await db.delete(book).where(eq(book.id, input.id));
     await removeBookSource(rows[0]?.sourcePath ?? null);
     invalidateBookSearchIndex(input.id);
@@ -169,6 +171,7 @@ export const bookRouter = {
         .from(bookChapterContent)
         .where(eq(bookChapterContent.id, input.id));
 
+      await resetChapterContentNarration(input.id);
       await db
         .update(bookChapterContent)
         .set({ content: input.content, updatedAt: new Date() })

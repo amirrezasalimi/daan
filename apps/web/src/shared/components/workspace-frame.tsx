@@ -12,6 +12,7 @@ interface WorkspaceFrameProps {
   children: ReactNode;
   sidebar?: ReactNode;
   inspector?: ReactNode;
+  headerActions?: ReactNode;
   contentScrollable?: boolean;
 }
 
@@ -20,6 +21,7 @@ export function WorkspaceFrame({
   children,
   sidebar,
   inspector,
+  headerActions,
   contentScrollable = true,
 }: WorkspaceFrameProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -43,6 +45,7 @@ export function WorkspaceFrame({
               </div>
 
               <div className="flex items-center justify-end gap-2">
+                {headerActions}
                 <ModeToggle />
                 <ActionIcon
                   variant="default"

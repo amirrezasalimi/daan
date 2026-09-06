@@ -146,12 +146,16 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
                   proxy={draft.socks5Proxy}
                   extractChapterMode={draft.extractChapterMode}
                   narrateWithAI={draft.narrateWithAI}
+                  narrateAheadCount={draft.narrateAheadCount}
                   narrateStyle={draft.narrateStyle}
                   defaultModels={draft.defaultModels}
                   onExtractChapterModeChange={(extractChapterMode) =>
                     setDraft({ ...draft, extractChapterMode })
                   }
                   onNarrateWithAIChange={(narrateWithAI) => setDraft({ ...draft, narrateWithAI })}
+                  onNarrateAheadCountChange={(narrateAheadCount) =>
+                    setDraft({ ...draft, narrateAheadCount })
+                  }
                   onNarrateStyleChange={(narrateStyle) => setDraft({ ...draft, narrateStyle })}
                   onDefaultModelsChange={(defaultModels) => setDraft({ ...draft, defaultModels })}
                   onProxyChange={(socks5Proxy) => setDraft({ ...draft, socks5Proxy })}

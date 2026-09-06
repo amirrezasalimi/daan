@@ -1,4 +1,5 @@
 import { createContext } from "@daan/api/context";
+import { getNarrationAudioPath } from "@daan/api/narration/service";
 import { appRouter } from "@daan/api/routers/index";
 import { desktopOrigins, env } from "@daan/env/server";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
@@ -9,7 +10,9 @@ import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { shutdownQueues } from "./queue";
+import { initializeQueues, narrationQueue, shutdownQueues } from "./queue";
+
+await initializeQueues();
 
 const app = new Hono();
 
@@ -22,6 +25,21 @@ app.use(
     allowHeaders: ["Content-Type", "Authorization"],
   }),
 );
+
+app.get("/narration/audio/:id", async (c) => {
+  const path = await getNarrationAudioPath(c.req.param("id"));
+  if (!path) return c.notFound();
+
+  const file = Bun.file(path);
+  if (!(await file.exists())) return c.notFound();
+  return new Response(file, {
+    headers: {
+      "Accept-Ranges": "bytes",
+      "Cache-Control": "private, max-age=31536000, immutable",
+      "Content-Type": "audio/mpeg",
+    },
+  });
+});
 
 export const apiHandler = new OpenAPIHandler(appRouter, {
   plugins: [
@@ -45,7 +63,7 @@ export const rpcHandler = new RPCHandler(appRouter, {
 });
 
 app.use("/*", async (c, next) => {
-  const context = await createContext({ context: c });
+  const context = await createContext({ context: c, narrationQueue });
 
   const rpcResult = await rpcHandler.handle(c.req.raw, {
     prefix: "/rpc",

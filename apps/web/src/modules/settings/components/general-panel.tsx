@@ -7,17 +7,27 @@ import type {
   Socks5ProxyConfig,
 } from "@daan/api/config/schema";
 import { NARRATE_STYLES } from "@daan/api/config/schema";
-import { SegmentedControl, Select, Stack, Switch, Text, TextInput } from "@mantine/core";
+import {
+  NumberInput,
+  SegmentedControl,
+  Select,
+  Stack,
+  Switch,
+  Text,
+  TextInput,
+} from "@mantine/core";
 
 interface GeneralPanelProps {
   services: LlmServiceConfig[];
   proxy: Socks5ProxyConfig;
   extractChapterMode: ExtractChapterMode;
   narrateWithAI: boolean;
+  narrateAheadCount: number;
   narrateStyle: NarrateStyle;
   defaultModels: DefaultModels;
   onExtractChapterModeChange: (mode: ExtractChapterMode) => void;
   onNarrateWithAIChange: (value: boolean) => void;
+  onNarrateAheadCountChange: (value: number) => void;
   onNarrateStyleChange: (style: NarrateStyle) => void;
   onDefaultModelsChange: (models: DefaultModels) => void;
   onProxyChange: (proxy: Socks5ProxyConfig) => void;
@@ -39,10 +49,12 @@ export function GeneralPanel({
   proxy,
   extractChapterMode,
   narrateWithAI,
+  narrateAheadCount,
   narrateStyle,
   defaultModels,
   onExtractChapterModeChange,
   onNarrateWithAIChange,
+  onNarrateAheadCountChange,
   onNarrateStyleChange,
   onDefaultModelsChange,
   onProxyChange,
@@ -128,14 +140,23 @@ export function GeneralPanel({
           />
         </div>
         {narrateWithAI ? (
-          <Select
-            mt="md"
-            label="Narration style"
-            data={narrateOptions}
-            value={narrateStyle}
-            allowDeselect={false}
-            onChange={(value) => onNarrateStyleChange((value as NarrateStyle) ?? "neutral")}
-          />
+          <Stack gap="sm" mt="md">
+            <NumberInput
+              label="Generate ahead"
+              description="Number of upcoming paragraphs prepared in the background."
+              min={0}
+              max={20}
+              value={narrateAheadCount}
+              onChange={(value) => onNarrateAheadCountChange(typeof value === "number" ? value : 0)}
+            />
+            <Select
+              label="Narration style"
+              data={narrateOptions}
+              value={narrateStyle}
+              allowDeselect={false}
+              onChange={(value) => onNarrateStyleChange((value as NarrateStyle) ?? "neutral")}
+            />
+          </Stack>
         ) : null}
       </section>
 

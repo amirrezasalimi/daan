@@ -12,6 +12,10 @@ build
 apps/web/src/routeTree.gen.ts
 local.db
 local.db-*
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
 
 # Environment variables
 .env
@@ -59,4 +63,9 @@ temp
 
 # Local app configuration (contains API keys)
 config.yaml
+config*.yaml
+!config.example.yaml
 uploads/
+**/uploads/
+apps/server/data/
+data/

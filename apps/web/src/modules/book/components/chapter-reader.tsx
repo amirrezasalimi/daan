@@ -13,6 +13,9 @@ interface ChapterReaderProps {
   chapter: BookChapter | null;
   highlightTerms: string[];
   nextChapter: BookChapter | null;
+  narrationActiveIndex?: number | null;
+  narrationEnabled?: boolean;
+  onNarrationSelect?: (index: number) => void;
   onNextChapter: () => void;
 }
 
@@ -50,6 +53,9 @@ export function ChapterReader({
   chapter,
   highlightTerms,
   nextChapter,
+  narrationActiveIndex = null,
+  narrationEnabled = false,
+  onNarrationSelect,
   onNextChapter,
 }: ChapterReaderProps) {
   const { data, isLoading } = useChapterContentQuery(chapter?.id ?? null);
@@ -94,6 +100,13 @@ export function ChapterReader({
   useEffect(() => {
     viewportRef.current?.scrollTo({ top: 0 });
   }, [chapter?.id]);
+
+  useEffect(() => {
+    if (narrationActiveIndex == null) return;
+    viewportRef.current
+      ?.querySelector<HTMLElement>(`[data-narration-index="${narrationActiveIndex}"]`)
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [narrationActiveIndex]);
 
   useEffect(() => {
     if (isLoading || highlightTerms.length === 0) {
@@ -194,11 +207,30 @@ export function ChapterReader({
               <Text c="var(--app-text-subtle)">This chapter has no extracted text.</Text>
             ) : (
               blocks.map((block, index) => {
+                const narrationProps = narrationEnabled
+                  ? {
+                      "data-narration-index": index,
+                      "data-narration-active": narrationActiveIndex === index || undefined,
+                      role: "button",
+                      tabIndex: 0,
+                      onClick: () => onNarrationSelect?.(index),
+                      onKeyDown: (event: React.KeyboardEvent<HTMLElement>) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          onNarrationSelect?.(index);
+                        }
+                      },
+                    }
+                  : {};
+                const narrationClass = narrationEnabled
+                  ? "cursor-pointer rounded-md px-2 py-1 -mx-2 transition-colors hover:bg-[var(--app-surface-muted)] data-[narration-active=true]:bg-[color-mix(in_srgb,var(--app-accent)_14%,transparent)]"
+                  : "";
                 if (block.type === "heading-2") {
                   return (
                     <h2
                       key={index}
-                      className="mb-5 mt-14 text-[1.65rem] font-semibold leading-[1.25] tracking-[-0.015em] text-[var(--app-text)] first:mt-0"
+                      className={`mb-5 mt-14 text-[1.65rem] font-semibold leading-[1.25] tracking-[-0.015em] text-[var(--app-text)] first:mt-0 ${narrationClass}`}
+                      {...narrationProps}
                     >
                       {renderRuns(block.runs)}
                     </h2>
@@ -208,14 +240,19 @@ export function ChapterReader({
                   return (
                     <h3
                       key={index}
-                      className="mb-4 mt-10 text-[1.3rem] font-semibold leading-[1.35] text-[var(--app-text)] first:mt-0"
+                      className={`mb-4 mt-10 text-[1.3rem] font-semibold leading-[1.35] text-[var(--app-text)] first:mt-0 ${narrationClass}`}
+                      {...narrationProps}
                     >
                       {renderRuns(block.runs)}
                     </h3>
                   );
                 }
                 return (
-                  <p key={index} className="mb-6 whitespace-pre-line last:mb-0">
+                  <p
+                    key={index}
+                    className={`mb-6 whitespace-pre-line last:mb-0 ${narrationClass}`}
+                    {...narrationProps}
+                  >
                     {renderRuns(block.runs)}
                   </p>
                 );

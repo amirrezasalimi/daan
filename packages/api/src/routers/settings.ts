@@ -4,8 +4,11 @@ import OpenAI from "openai";
 import { z } from "zod";
 
 import { appConfigSchema, readConfig, socks5ProxySchema, writeConfig } from "../config";
+import { TTS_PROVIDERS } from "../config/schema";
 import { publicProcedure } from "../index";
+import { generateSpeech } from "../narration/generate";
 
+const PREVIEW_TEXT = "This is a preview of the selected narration voice.";
 const DEEPGRAM_VOICES_URL = "https://developers.deepgram.com/docs/tts-models";
 const execFileAsync = promisify(execFile);
 
@@ -23,7 +26,7 @@ async function listDeepgramVoices(proxy: { enabled: boolean; url: string }): Pro
 
   let html: string;
   try {
-    const result = await execFileAsync(args[0], args.slice(1), {
+    const result = await execFileAsync("curl", args.slice(1), {
       encoding: "utf8",
       maxBuffer: 10 * 1024 * 1024,
     });
@@ -45,7 +48,13 @@ async function listDeepgramVoices(proxy: { enabled: boolean; url: string }): Pro
     throw new Error("Could not load Deepgram voices from the official documentation.");
   }
 
-  const voices: string[] = [...new Set(html.match(/aura-[a-zA-Z0-9._-]+/g) ?? [])].sort();
+  const voices: string[] = [
+    ...new Set(
+      (html.match(/aura-[a-zA-Z0-9._-]+/g) ?? []).filter((voice) =>
+        /^aura-(?:\d+-)?[a-z0-9]+-[a-z]{2}$/i.test(voice),
+      ),
+    ),
+  ].sort();
   if (voices.length === 0) {
     throw new Error("No supported Deepgram voices were found");
   }
@@ -83,5 +92,35 @@ export const settingsRouter = {
       const ids = response.data.map((model) => model.id).filter(Boolean);
 
       return { models: [...new Set(ids)].sort() };
+    }),
+
+  previewVoice: publicProcedure
+    .input(
+      z.object({
+        provider: z.enum(TTS_PROVIDERS),
+        endpoint: z.string().min(1),
+        apiKey: z.string().default(""),
+        model: z.string().min(1),
+        voice: z.string().min(1),
+      }),
+    )
+    .handler(async ({ input }) => {
+      const config = readConfig();
+      const audio = await generateSpeech({
+        service: {
+          id: "preview",
+          name: "Preview",
+          provider: input.provider,
+          endpoint: input.endpoint,
+          apiKey: input.apiKey,
+          models: [],
+        },
+        model: input.model,
+        voice: input.voice,
+        text: PREVIEW_TEXT,
+        proxy: config.socks5Proxy,
+      });
+
+      return { audio: Buffer.from(audio).toString("base64") };
     }),
 };

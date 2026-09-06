@@ -40,3 +40,22 @@ export function useListModels() {
     },
   });
 }
+
+export function usePreviewVoice() {
+  return useMutation({
+    mutationFn: (input: {
+      provider: AppConfig["ttsServices"][number]["provider"];
+      endpoint: string;
+      apiKey: string;
+      model: string;
+      voice: string;
+    }) => client.settings.previewVoice(input),
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to preview voice");
+    },
+  });
+}
+
+export function useReadyVoicesQuery() {
+  return useQuery(orpc.narration.getReadyVoices.queryOptions());
+}

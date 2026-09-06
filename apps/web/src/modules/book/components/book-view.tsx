@@ -1,12 +1,17 @@
-import { Loader } from "@mantine/core";
+import { ActionIcon, Loader, Tooltip } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
+import { AudioLines } from "lucide-react";
 import { type CSSProperties, useEffect, useState } from "react";
 
 import { WorkspaceFrame } from "@/shared/components";
 
+import { useSettingsQuery } from "@/modules/settings";
+
 import { useBookQuery, useChaptersQuery } from "../hooks/use-book";
+import { useNarration } from "../hooks/use-narration";
 import { ChapterNav } from "./chapter-nav";
 import { ChapterReader } from "./chapter-reader";
+import { NarrationPlayer } from "./narration-player";
 import {
   clampChapterSidebarWidth,
   DEFAULT_CHAPTER_SIDEBAR_WIDTH,
@@ -49,6 +54,7 @@ export function BookView({ bookId }: BookViewProps) {
   const [highlightTerms, setHighlightTerms] = useState<string[]>([]);
   const [sidebarWidth, setSidebarWidth] = useState(getSavedSidebarWidth);
   const [collapsed, setCollapsed] = useState(getSavedSidebarCollapsed);
+  const { data: settings } = useSettingsQuery();
 
   useEffect(() => {
     const saveTimer = window.setTimeout(() => {
@@ -80,6 +86,8 @@ export function BookView({ bookId }: BookViewProps) {
   const activeChapter = activeIndex >= 0 ? (chapters?.[activeIndex] ?? null) : null;
   const nextChapter = activeIndex >= 0 ? (chapters?.[activeIndex + 1] ?? null) : null;
   const loading = bookLoading || chaptersLoading;
+  const narration = useNarration(bookId, activeChapter?.id ?? null);
+  const narrationOpen = narration.opened;
 
   const selectChapter = (chapterId: string, matchedTerms: string[]) => {
     setActiveId(chapterId);
@@ -115,6 +123,21 @@ export function BookView({ bookId }: BookViewProps) {
           </Link>
         </nav>
       }
+      headerActions={
+        settings?.narrateWithAI ? (
+          <Tooltip label={narrationOpen ? "Hide narration" : "Open narration"}>
+            <ActionIcon
+              variant={narrationOpen ? "light" : "default"}
+              color="brand"
+              size="lg"
+              aria-label={narrationOpen ? "Hide narration" : "Open narration"}
+              onClick={() => narration.setOpened((value) => !value)}
+            >
+              <AudioLines size={17} strokeWidth={1.6} />
+            </ActionIcon>
+          </Tooltip>
+        ) : null
+      }
       contentScrollable={false}
     >
       <div
@@ -149,7 +172,7 @@ export function BookView({ bookId }: BookViewProps) {
           disabled={collapsed}
         />
 
-        <div className="min-h-0 overflow-hidden">
+        <div className="relative min-h-0 overflow-hidden">
           {loading ? (
             <div className="grid h-full place-items-center">
               <Loader color="brand" />
@@ -159,9 +182,37 @@ export function BookView({ bookId }: BookViewProps) {
               chapter={activeChapter}
               highlightTerms={highlightTerms}
               nextChapter={nextChapter}
+              narrationActiveIndex={narrationOpen ? narration.activeIndex : null}
+              narrationEnabled={narrationOpen}
+              onNarrationSelect={narration.playIndex}
               onNextChapter={selectNextChapter}
             />
           )}
+          {narrationOpen && activeChapter ? (
+            <NarrationPlayer
+              activeIndex={narration.activeIndex}
+              activeWorkerCount={narration.activeWorkerCount}
+              currentText={narration.activeSegment?.content ?? ""}
+              duration={narration.duration}
+              error={narration.activeSegment?.error ?? null}
+              generatePending={narration.generatePending}
+              isPlaying={narration.isPlaying}
+              modelOptions={narration.modelOptions}
+              progress={narration.progress}
+              resetPending={narration.resetPending}
+              selection={narration.selection}
+              status={narration.activeSegment?.status ?? "missing"}
+              total={narration.segments.length}
+              volume={narration.volume}
+              onChangeModel={narration.changeModel}
+              onChangeVolume={narration.setVolume}
+              onClose={() => narration.setOpened(false)}
+              onRegenerate={narration.regenerate}
+              onReset={narration.reset}
+              onSeek={narration.seek}
+              onTogglePlayback={narration.togglePlayback}
+            />
+          ) : null}
         </div>
       </div>
     </WorkspaceFrame>

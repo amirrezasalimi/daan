@@ -25,7 +25,7 @@ export function createQueryClient() {
 
 export const queryClient = createQueryClient();
 
-function getServerUrl(url: string) {
+export function getServerUrl(url: string) {
   const processEnv = (
     globalThis as {
       process?: { env?: Record<string, string | undefined> };
@@ -57,6 +57,11 @@ function getServerUrl(url: string) {
   }
 
   return `http://localhost:3006${normalized}`;
+}
+
+export function getApiAssetUrl(path: string): string {
+  const serverUrl = getServerUrl(env.VITE_SERVER_URL);
+  return new URL(path, `${serverUrl}/`).toString();
 }
 
 export const link = new RPCLink({

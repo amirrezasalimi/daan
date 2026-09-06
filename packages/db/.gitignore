@@ -23,6 +23,11 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .env.production.local
 .env.local
 
+# Databases
+*.db*
+*.sqlite*
+local.db*
+
 # caches
 .eslintcache
 .cache

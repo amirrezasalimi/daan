@@ -153,6 +153,7 @@ apps/web/src/
    - `verbatimModuleSyntax` is enabled: always use `import type { ... }` for types.
    - Strict typing with zero `any`.
    - No unused variables or imports.
+6. **Never commit unless explicitly requested**: Do not create a Git commit unless the user explicitly asks for a commit in their current message. A commit request does not carry over to later messages.
 
 ---
 

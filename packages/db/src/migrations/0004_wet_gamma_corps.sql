@@ -1,0 +1,2 @@
+DROP INDEX `narration_content_hash_idx`;--> statement-breakpoint
+CREATE UNIQUE INDEX `narration_content_identity_idx` ON `book_chapter_content_narration` (`chapter_content_id`,`position_start`,`content_hash`,`tts_service_id`,`model`,`voice`);
