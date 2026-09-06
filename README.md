@@ -4,6 +4,8 @@
 >
 > **Why "Daan"?** In Persian, **Daan** (دان) is the root of knowing and wisdom (*dānestan* / دانستن), and a vessel that holds knowledge.
 
+![Daan Reader](./screenshot.png)
+
 ---
 
 ## Highlights & Features
