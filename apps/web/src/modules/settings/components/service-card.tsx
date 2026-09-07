@@ -1,21 +1,11 @@
-import type { LlmServiceConfig, ModelConfig } from "@daan/api/config/schema";
-import {
-  ActionIcon,
-  Button,
-  Checkbox,
-  Divider,
-  Group,
-  PasswordInput,
-  ScrollArea,
-  Stack,
-  Text,
-  TextInput,
-} from "@mantine/core";
-import { ChevronDown, ChevronUp, DownloadCloud, Plus, Search, Trash2, X } from "lucide-react";
+import type { LlmServiceConfig } from "@daan/api/config/schema";
+import { ActionIcon, Button, Group, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
+import { ChevronDown, ChevronRight, DownloadCloud, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { useListModels } from "../hooks/use-settings";
+import { LlmModelList } from "./llm-model-list";
 
 interface ServiceCardProps {
   service: LlmServiceConfig;
@@ -24,38 +14,9 @@ interface ServiceCardProps {
   onRemove: () => void;
 }
 
-const INITIAL_MODEL_COUNT = 5;
-const MODEL_LIST_MAX_HEIGHT = 420;
-
-function emptyModel(): ModelConfig {
-  return { name: "", id: "", supportTools: false, supportVision: false };
-}
-
 export function ServiceCard({ service, index, onChange, onRemove }: ServiceCardProps) {
   const listModels = useListModels();
-  const [showAllModels, setShowAllModels] = useState(false);
-  const [modelQuery, setModelQuery] = useState("");
-  const normalizedQuery = modelQuery.trim().toLocaleLowerCase();
-  const indexedModels = service.models.map((model, modelIndex) => ({
-    model,
-    modelIndex,
-  }));
-  const filteredModels = normalizedQuery
-    ? indexedModels.filter(({ model }) =>
-        `${model.name} ${model.id}`.toLocaleLowerCase().includes(normalizedQuery),
-      )
-    : indexedModels;
-  const hasMoreModels = service.models.length > INITIAL_MODEL_COUNT;
-  const visibleModels =
-    normalizedQuery || showAllModels
-      ? filteredModels
-      : filteredModels.slice(0, INITIAL_MODEL_COUNT);
-
-  const updateModel = (modelIndex: number, patch: Partial<ModelConfig>) => {
-    onChange({
-      models: service.models.map((m, i) => (i === modelIndex ? { ...m, ...patch } : m)),
-    });
-  };
+  const [modelsExpanded, setModelsExpanded] = useState(false);
 
   const handleLoadModels = () => {
     if (!service.endpoint) {
@@ -83,6 +44,7 @@ export function ServiceCard({ service, index, onChange, onRemove }: ServiceCardP
           }
 
           onChange({ models: [...service.models, ...added] });
+          setModelsExpanded(true);
           toast.success(`Loaded ${added.length} model(s)`);
         },
       },
@@ -122,144 +84,50 @@ export function ServiceCard({ service, index, onChange, onRemove }: ServiceCardP
           onChange={(e) => onChange({ apiKey: e.currentTarget.value })}
         />
 
-        <Divider label="Models" labelPosition="left" c="var(--app-text-muted)" />
-
-        {service.models.length > 0 ? (
-          <TextInput
-            size="xs"
-            radius="xl"
-            value={modelQuery}
-            onChange={(event) => setModelQuery(event.currentTarget.value)}
-            placeholder="Search models"
-            aria-label="Search models by name or id"
-            leftSection={<Search size={14} strokeWidth={1.6} />}
-            rightSection={
-              modelQuery ? (
-                <ActionIcon
-                  size="xs"
-                  variant="subtle"
-                  aria-label="Clear model search"
-                  onClick={() => setModelQuery("")}
-                >
-                  <X size={13} strokeWidth={1.7} />
-                </ActionIcon>
-              ) : null
-            }
-            rightSectionPointerEvents={modelQuery ? "all" : "none"}
-          />
-        ) : null}
-
-        <ScrollArea.Autosize mah={MODEL_LIST_MAX_HEIGHT} type="auto" offsetScrollbars="y">
-          <Stack gap="sm" pr="xs">
-            {normalizedQuery && visibleModels.length === 0 ? (
-              <Text size="sm" c="var(--app-text-subtle)" ta="center" py="md">
-                No matching models.
+        <Group
+          justify="space-between"
+          align="center"
+          mt="xs"
+          className="cursor-pointer select-none"
+          onClick={() => setModelsExpanded((value) => !value)}
+        >
+          <Group gap={6}>
+            <ActionIcon
+              size="sm"
+              variant="subtle"
+              aria-label={modelsExpanded ? "Collapse models" : "Expand models"}
+              onClick={(event) => {
+                event.stopPropagation();
+                setModelsExpanded((value) => !value);
+              }}
+            >
+              {modelsExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </ActionIcon>
+            <div>
+              <Text size="sm" fw={600} c="var(--app-text)">
+                Models
               </Text>
-            ) : null}
-            {visibleModels.map(({ model, modelIndex }) => (
-              <div
-                key={`${model.id}-${modelIndex}`}
-                className="rounded-lg border border-[var(--app-border-subtle)] bg-[var(--app-surface-raised)] p-3"
-              >
-                <Group grow mb="xs">
-                  <TextInput
-                    size="xs"
-                    label="Display name"
-                    placeholder="GPT-4o"
-                    value={model.name}
-                    onChange={(e) => updateModel(modelIndex, { name: e.currentTarget.value })}
-                  />
-                  <TextInput
-                    size="xs"
-                    label="Model id"
-                    placeholder="gpt-4o"
-                    value={model.id}
-                    onChange={(e) => updateModel(modelIndex, { id: e.currentTarget.value })}
-                  />
-                </Group>
-                <Group justify="space-between" align="center">
-                  <Group gap="lg">
-                    <Checkbox
-                      size="xs"
-                      label="Tools"
-                      checked={model.supportTools}
-                      onChange={(e) =>
-                        updateModel(modelIndex, {
-                          supportTools: e.currentTarget.checked,
-                        })
-                      }
-                    />
-                    <Checkbox
-                      size="xs"
-                      label="Vision"
-                      checked={model.supportVision}
-                      onChange={(e) =>
-                        updateModel(modelIndex, {
-                          supportVision: e.currentTarget.checked,
-                        })
-                      }
-                    />
-                  </Group>
-                  <ActionIcon
-                    size="sm"
-                    variant="subtle"
-                    color="red"
-                    aria-label="Remove model"
-                    onClick={() =>
-                      onChange({
-                        models: service.models.filter((_, i) => i !== modelIndex),
-                      })
-                    }
-                  >
-                    <Trash2 size={14} />
-                  </ActionIcon>
-                </Group>
-              </div>
-            ))}
-          </Stack>
-        </ScrollArea.Autosize>
-
-        {hasMoreModels && !normalizedQuery ? (
+              <Text size="xs" c="var(--app-text-subtle)">
+                {service.models.length} model{service.models.length === 1 ? "" : "s"}
+              </Text>
+            </div>
+          </Group>
           <Button
             size="compact-xs"
-            variant="subtle"
-            color="brand"
-            rightSection={
-              showAllModels ? (
-                <ChevronUp size={14} strokeWidth={1.7} />
-              ) : (
-                <ChevronDown size={14} strokeWidth={1.7} />
-              )
-            }
-            onClick={() => setShowAllModels((value) => !value)}
-          >
-            {showAllModels
-              ? "Show fewer"
-              : `Show ${service.models.length - INITIAL_MODEL_COUNT} more`}
-          </Button>
-        ) : null}
-
-        <Group gap="xs">
-          <Button
-            size="xs"
-            variant="subtle"
-            color="brand"
-            leftSection={<Plus size={14} />}
-            onClick={() => onChange({ models: [...service.models, emptyModel()] })}
-          >
-            Add model
-          </Button>
-          <Button
-            size="xs"
             variant="light"
             color="brand"
             leftSection={<DownloadCloud size={14} />}
             loading={listModels.isPending}
-            onClick={handleLoadModels}
+            onClick={(event) => {
+              event.stopPropagation();
+              handleLoadModels();
+            }}
           >
             Load models
           </Button>
         </Group>
+
+        <LlmModelList service={service} expanded={modelsExpanded} onChange={onChange} />
       </Stack>
     </div>
   );

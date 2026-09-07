@@ -13,6 +13,9 @@
   "dependencies": {
     "@daan/api": "workspace:*",
     "@daan/env": "workspace:*",
+    "@daan/pocket-tts": "workspace:*",
+    "@jax-js/jax": "catalog:",
+    "@jax-js/loaders": "catalog:",
     "@mantine/core": "catalog:",
     "@mantine/hooks": "catalog:",
     "@orpc/client": "catalog:",
@@ -21,6 +24,7 @@
     "@tanstack/react-query": "^5.101.4",
     "@tanstack/react-router": "^1.170.18",
     "dotenv": "catalog:",
+    "kokoro-js": "1.2.1",
     "lucide-react": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",

@@ -2,7 +2,15 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import YAML from "yaml";
 
-import { type AppConfig, appConfigSchema, DEFAULT_CONFIG } from "./schema";
+import {
+  type AppConfig,
+  appConfigSchema,
+  BUILTIN_KOKORO_SERVICE,
+  BUILTIN_POCKET_TTS_SERVICE,
+  DEFAULT_CONFIG,
+} from "./schema";
+
+const BUILTIN_BROWSER_SERVICES = [BUILTIN_KOKORO_SERVICE, BUILTIN_POCKET_TTS_SERVICE];
 
 const CONFIG_FILENAME = "config.yaml";
 
@@ -54,7 +62,32 @@ export function readConfig(): AppConfig {
   try {
     const raw = readFileSync(path, "utf8");
     const parsed = YAML.parse(raw) ?? {};
-    return appConfigSchema.parse(parsed);
+    const config = appConfigSchema.parse(parsed);
+    for (const builtin of [...BUILTIN_BROWSER_SERVICES].reverse()) {
+      const existingIndex = config.ttsServices.findIndex((service) => service.id === builtin.id);
+      if (existingIndex === -1) {
+        config.ttsServices.unshift(structuredClone(builtin));
+      } else {
+        config.ttsServices[existingIndex] = structuredClone(builtin);
+      }
+    }
+    const selectedBuiltin = BUILTIN_BROWSER_SERVICES.find(
+      (service) => service.id === config.defaultTtsModel.service,
+    );
+    if (
+      selectedBuiltin &&
+      !selectedBuiltin.models.some((model) => model.id === config.defaultTtsModel.model)
+    ) {
+      config.defaultTtsModel = {
+        service: selectedBuiltin.id,
+        model: selectedBuiltin.models[0]!.id,
+        voice: config.defaultTtsModel.voice || selectedBuiltin.models[0]!.voices[0]!,
+      };
+    }
+    if (!config.defaultTtsModel.service) {
+      config.defaultTtsModel = structuredClone(DEFAULT_CONFIG.defaultTtsModel);
+    }
+    return config;
   } catch (error) {
     console.error(`Failed to read ${CONFIG_FILENAME}:`, error);
     return structuredClone(DEFAULT_CONFIG);

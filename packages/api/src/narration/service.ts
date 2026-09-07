@@ -1,6 +1,6 @@
 import { db } from "@daan/db";
 import { bookChapter, bookChapterContent, bookChapterContentNarration } from "@daan/db/schema/book";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, count, eq, inArray } from "drizzle-orm";
 
 import { readConfig } from "../config";
 import { generateSpeech } from "./generate";
@@ -161,22 +161,80 @@ export async function queueNarrationRange(input: {
         status: "pending",
       });
     }
-    const jobId = await input.queue.add(recordId!);
-    await db
-      .update(bookChapterContentNarration)
-      .set({ jobId })
-      .where(eq(bookChapterContentNarration.id, recordId!));
+    if (service.provider !== "browser-local") {
+      const jobId = await input.queue.add(recordId!);
+      await db
+        .update(bookChapterContentNarration)
+        .set({ jobId })
+        .where(eq(bookChapterContentNarration.id, recordId!));
+    }
   }
 
   return getNarrationSegments(input.chapterId, input.selection);
 }
 
+export async function getPendingBrowserNarrations(input: {
+  chapterId: string;
+  selection: NarrationSelection;
+}): Promise<Array<{ id: string; text: string }>> {
+  const config = readConfig();
+  const service = config.ttsServices.find((item) => item.id === input.selection.service);
+  if (service?.provider !== "browser-local") return [];
+  return db
+    .select({ id: bookChapterContentNarration.id, text: bookChapterContentNarration.content })
+    .from(bookChapterContentNarration)
+    .where(
+      and(
+        eq(bookChapterContentNarration.chapterId, input.chapterId),
+        eq(bookChapterContentNarration.ttsServiceId, input.selection.service),
+        eq(bookChapterContentNarration.model, input.selection.model),
+        eq(bookChapterContentNarration.voice, input.selection.voice),
+        eq(bookChapterContentNarration.status, "pending"),
+      ),
+    )
+    .orderBy(asc(bookChapterContentNarration.paragraphIndex));
+}
+
+export async function completeBrowserNarration(recordId: string, audio: Uint8Array): Promise<void> {
+  const [record] = await db
+    .select()
+    .from(bookChapterContentNarration)
+    .where(eq(bookChapterContentNarration.id, recordId));
+  if (!record) throw new Error("Narration record not found");
+  const config = readConfig();
+  const service = config.ttsServices.find((item) => item.id === record.ttsServiceId);
+  if (service?.provider !== "browser-local") throw new Error("Invalid local narration record");
+  const audioPath = await storeNarrationAudio(record.id, audio, "wav");
+  await db
+    .update(bookChapterContentNarration)
+    .set({ audioPath, status: "ready", error: null, updatedAt: new Date() })
+    .where(eq(bookChapterContentNarration.id, recordId));
+}
+
+export async function failBrowserNarration(recordId: string, message: string): Promise<void> {
+  await db
+    .update(bookChapterContentNarration)
+    .set({ status: "failed", error: message.slice(0, 500), updatedAt: new Date() })
+    .where(eq(bookChapterContentNarration.id, recordId));
+}
+
 export async function getRecoverableNarrationIds(): Promise<string[]> {
   const records = await db
-    .select({ id: bookChapterContentNarration.id })
+    .select({
+      id: bookChapterContentNarration.id,
+      serviceId: bookChapterContentNarration.ttsServiceId,
+    })
     .from(bookChapterContentNarration)
     .where(inArray(bookChapterContentNarration.status, ["pending", "processing"]));
-  return records.map((record) => record.id);
+  const config = readConfig();
+  const browserServiceIds = new Set(
+    config.ttsServices
+      .filter((service) => service.provider === "browser-local")
+      .map((service) => service.id),
+  );
+  return records
+    .filter((record) => !browserServiceIds.has(record.serviceId))
+    .map((record) => record.id);
 }
 
 export async function processNarration(recordId: string): Promise<void> {
@@ -254,6 +312,14 @@ async function removeNarrationRecords(records: Array<{ id: string; audioPath: st
       .delete(bookChapterContentNarration)
       .where(eq(bookChapterContentNarration.id, record.id));
   }
+}
+
+export async function countChapterNarrations(chapterId: string): Promise<number> {
+  const [result] = await db
+    .select({ count: count() })
+    .from(bookChapterContentNarration)
+    .where(eq(bookChapterContentNarration.chapterId, chapterId));
+  return result?.count ?? 0;
 }
 
 export async function resetChapterNarration(chapterId: string): Promise<void> {

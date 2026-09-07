@@ -8,6 +8,15 @@ export function useSettingsQuery() {
   return useQuery(orpc.settings.get.queryOptions());
 }
 
+export function useSystemResourcesQuery(enabled: boolean) {
+  return useQuery({
+    ...orpc.system.resources.queryOptions(),
+    enabled,
+    refetchInterval: enabled ? 1_500 : false,
+    staleTime: 1_000,
+  });
+}
+
 export function useUpdateSettings() {
   const queryClient = useQueryClient();
 

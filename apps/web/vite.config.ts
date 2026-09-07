@@ -3,6 +3,9 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
+  worker: {
+    format: "es",
+  },
   server: {
     port: 3007,
     proxy: {

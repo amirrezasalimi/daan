@@ -1,5 +1,5 @@
 import { createContext } from "@daan/api/context";
-import { getNarrationAudioPath } from "@daan/api/narration/service";
+import { completeBrowserNarration, getNarrationAudioPath } from "@daan/api/narration/service";
 import { appRouter } from "@daan/api/routers/index";
 import { desktopOrigins, env } from "@daan/env/server";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
@@ -26,6 +26,15 @@ app.use(
   }),
 );
 
+app.post("/narration/browser-audio/:id", async (c) => {
+  const audio = new Uint8Array(await c.req.arrayBuffer());
+  if (audio.byteLength === 0 || audio.byteLength > 20 * 1024 * 1024) {
+    return c.json({ error: "Invalid local narration audio" }, 400);
+  }
+  await completeBrowserNarration(c.req.param("id"), audio);
+  return c.json({ id: c.req.param("id") });
+});
+
 app.get("/narration/audio/:id", async (c) => {
   const path = await getNarrationAudioPath(c.req.param("id"));
   if (!path) return c.notFound();
@@ -36,7 +45,7 @@ app.get("/narration/audio/:id", async (c) => {
     headers: {
       "Accept-Ranges": "bytes",
       "Cache-Control": "private, max-age=31536000, immutable",
-      "Content-Type": "audio/mpeg",
+      "Content-Type": path.endsWith(".wav") ? "audio/wav" : "audio/mpeg",
     },
   });
 });

@@ -2,7 +2,7 @@
 
 > An intelligent, distraction-free book reader and AI audiobook narrator.
 >
-> **Why "Daan"?** In Persian, **Daan** (دان) is the root of knowing and wisdom (*dānestan* / دانستن), and a vessel that holds knowledge.
+> **Why "Daan"?** In Persian, **Daan** (دان) is the root of knowing and wisdom (_dānestan_ / دانستن), and a vessel that holds knowledge.
 
 ![Daan Reader](./screenshot.png)
 

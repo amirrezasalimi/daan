@@ -92,7 +92,7 @@ export function NarrationServicesPanel({
               Narration models
             </Text>
             <Text size="xs" c="var(--app-text-muted)">
-              Configure OpenAI-compatible or Deepgram text-to-speech providers.
+              Choose built-in on-device voices or configure cloud text-to-speech providers.
             </Text>
           </div>
           <Button
@@ -129,20 +129,26 @@ export function NarrationServicesPanel({
           </Text>
         ) : null}
 
-        {services.map((service, index) => (
-          <TtsServiceCard
-            key={service.id}
-            service={service}
-            proxy={proxy}
-            index={index}
-            onChange={(patch) =>
-              onServicesChange(
-                services.map((item) => (item.id === service.id ? { ...item, ...patch } : item)),
-              )
-            }
-            onRemove={() => setServiceToDelete(service)}
-          />
-        ))}
+        {[...services]
+          .sort(
+            (left, right) =>
+              Number(right.provider === "browser-local") -
+              Number(left.provider === "browser-local"),
+          )
+          .map((service, index) => (
+            <TtsServiceCard
+              key={service.id}
+              service={service}
+              proxy={proxy}
+              index={index}
+              onChange={(patch) =>
+                onServicesChange(
+                  services.map((item) => (item.id === service.id ? { ...item, ...patch } : item)),
+                )
+              }
+              onRemove={() => setServiceToDelete(service)}
+            />
+          ))}
       </Stack>
     </>
   );

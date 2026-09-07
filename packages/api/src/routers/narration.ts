@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 import {
+  countChapterNarrations,
+  failBrowserNarration,
   getNarrationSegments,
+  getPendingBrowserNarrations,
   getReadyVoices,
   queueNarrationRange,
   resetChapterNarration,
@@ -21,9 +24,24 @@ export const narrationRouter = {
 
   getReadyVoices: publicProcedure.handler(() => getReadyVoices()),
 
+  countChapterNarrations: publicProcedure
+    .input(z.object({ chapterId: z.string().min(1) }))
+    .handler(({ input }) => countChapterNarrations(input.chapterId)),
+
   getSegments: publicProcedure
     .input(z.object({ chapterId: z.string().min(1), selection: selectionSchema }))
     .handler(({ input }) => getNarrationSegments(input.chapterId, input.selection)),
+
+  getPendingBrowserNarrations: publicProcedure
+    .input(z.object({ chapterId: z.string().min(1), selection: selectionSchema }))
+    .handler(({ input }) => getPendingBrowserNarrations(input)),
+
+  failBrowserNarration: publicProcedure
+    .input(z.object({ recordId: z.string().min(1), message: z.string().min(1) }))
+    .handler(async ({ input }) => {
+      await failBrowserNarration(input.recordId, input.message);
+      return { id: input.recordId };
+    }),
 
   generate: publicProcedure
     .input(

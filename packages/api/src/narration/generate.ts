@@ -57,6 +57,9 @@ async function curlAudio(args: string[], authorization: string): Promise<Uint8Ar
 }
 
 export async function generateSpeech(input: GenerateSpeechInput): Promise<Uint8Array> {
+  if (input.service.provider === "browser-local") {
+    throw new Error("Browser-local speech must be generated on the device");
+  }
   const endpoint = input.service.endpoint.replace(/\/$/, "");
   const body =
     input.service.provider === "deepgram"

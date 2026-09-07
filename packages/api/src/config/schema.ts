@@ -26,7 +26,7 @@ export const llmServiceSchema = z.object({
 });
 export type LlmServiceConfig = z.infer<typeof llmServiceSchema>;
 
-export const TTS_PROVIDERS = ["openai-compatible", "deepgram"] as const;
+export const TTS_PROVIDERS = ["openai-compatible", "deepgram", "browser-local"] as const;
 export type TtsProvider = (typeof TTS_PROVIDERS)[number];
 
 export const ttsModelSchema = z.object({
@@ -123,9 +123,68 @@ export const appConfigSchema = z.object({
 });
 export type AppConfig = z.infer<typeof appConfigSchema>;
 
+export const BUILTIN_KOKORO_SERVICE: TtsServiceConfig = {
+  id: "browser-kokoro",
+  name: "Kokoro (on-device)",
+  provider: "browser-local",
+  endpoint: "browser://kokoro",
+  apiKey: "",
+  models: [
+    {
+      id: "onnx-community/Kokoro-82M-v1.0-ONNX#webgpu-fp32",
+      name: "Kokoro 82M v1.0 (WebGPU fp32)",
+      voices: [
+        "af_heart",
+        "af_alloy",
+        "af_aoede",
+        "af_bella",
+        "af_jessica",
+        "af_kore",
+        "af_nicole",
+        "af_nova",
+        "af_river",
+        "af_sarah",
+        "af_sky",
+        "am_adam",
+        "am_echo",
+        "am_eric",
+        "am_fenrir",
+        "am_liam",
+        "am_michael",
+        "am_onyx",
+        "am_puck",
+        "am_santa",
+        "bf_alice",
+        "bf_emma",
+        "bf_isabella",
+        "bf_lily",
+        "bm_daniel",
+        "bm_fable",
+        "bm_george",
+        "bm_lewis",
+      ],
+    },
+  ],
+};
+
+export const BUILTIN_POCKET_TTS_SERVICE: TtsServiceConfig = {
+  id: "browser-pocket-tts",
+  name: "Pocket TTS (on-device)",
+  provider: "browser-local",
+  endpoint: "browser://pocket-tts",
+  apiKey: "",
+  models: [
+    {
+      id: "kyutai/pocket-tts",
+      name: "Kyutai Pocket TTS (fp16, WebGPU)",
+      voices: ["alba", "azelma", "cosette", "eponine", "fantine", "javert", "jean", "marius"],
+    },
+  ],
+};
+
 export const DEFAULT_CONFIG: AppConfig = {
   llmServices: [],
-  ttsServices: [],
+  ttsServices: [BUILTIN_KOKORO_SERVICE, BUILTIN_POCKET_TTS_SERVICE],
   socks5Proxy: {
     enabled: false,
     url: "socks5h://127.0.0.1:10808",
@@ -134,7 +193,11 @@ export const DEFAULT_CONFIG: AppConfig = {
   narrateWithAI: false,
   narrateAheadCount: 3,
   narrateStyle: "neutral",
-  defaultTtsModel: { service: "", model: "", voice: "" },
+  defaultTtsModel: {
+    service: BUILTIN_KOKORO_SERVICE.id,
+    model: BUILTIN_KOKORO_SERVICE.models[0]!.id,
+    voice: "af_heart",
+  },
   defaultModels: {
     chat: { service: "", model: "" },
     extractChapters: { service: "", model: "" },

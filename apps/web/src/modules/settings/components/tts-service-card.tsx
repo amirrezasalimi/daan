@@ -4,22 +4,18 @@ import {
   Button,
   Group,
   PasswordInput,
-  ScrollArea,
   Select,
   Stack,
-  TagsInput,
   Text,
   TextInput,
 } from "@mantine/core";
-import { ChevronDown, ChevronUp, DownloadCloud, Plus, Search, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronRight, DownloadCloud, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { useListDeepgramVoices } from "../hooks/use-settings";
-import { VoicePreviewButton } from "./voice-preview-button";
-
-const INITIAL_MODEL_COUNT = 5;
-const MODEL_LIST_MAX_HEIGHT = 420;
+import { BrowserTtsServiceCard } from "./browser-tts-service-card";
+import { TtsModelList } from "./tts-model-list";
 
 interface TtsServiceCardProps {
   service: TtsServiceConfig;
@@ -35,28 +31,22 @@ function emptyModel(): TtsModelConfig {
 
 export function TtsServiceCard({ service, proxy, index, onChange, onRemove }: TtsServiceCardProps) {
   const listDeepgramVoices = useListDeepgramVoices();
-  const [showAllModels, setShowAllModels] = useState(false);
-  const [modelQuery, setModelQuery] = useState("");
-  const normalizedQuery = modelQuery.trim().toLocaleLowerCase();
-  const indexedModels = service.models.map((model, modelIndex) => ({ model, modelIndex }));
-  const filteredModels = normalizedQuery
-    ? indexedModels.filter(({ model }) =>
-        `${model.name} ${model.id} ${model.voices.join(" ")}`
-          .toLocaleLowerCase()
-          .includes(normalizedQuery),
-      )
-    : indexedModels;
-  const hasMoreModels = service.models.length > INITIAL_MODEL_COUNT;
-  const visibleModels =
-    normalizedQuery || showAllModels
-      ? filteredModels
-      : filteredModels.slice(0, INITIAL_MODEL_COUNT);
+  const isBrowserLocal = service.provider === "browser-local";
+  const [modelsExpanded, setModelsExpanded] = useState(false);
+
+  if (isBrowserLocal) return <BrowserTtsServiceCard service={service} />;
 
   const updateModel = (modelIndex: number, patch: Partial<TtsModelConfig>) => {
     onChange({
       models: service.models.map((model, currentIndex) =>
         currentIndex === modelIndex ? { ...model, ...patch } : model,
       ),
+    });
+  };
+
+  const removeModel = (modelIndex: number) => {
+    onChange({
+      models: service.models.filter((_, currentIndex) => currentIndex !== modelIndex),
     });
   };
 
@@ -131,17 +121,44 @@ export function TtsServiceCard({ service, proxy, index, onChange, onRemove }: Tt
           onChange={(event) => onChange({ apiKey: event.currentTarget.value })}
         />
 
-        <Group justify="space-between" mt="xs">
-          <Text size="sm" fw={600} c="var(--app-text)">
-            Models and voices
-          </Text>
+        <Group
+          justify="space-between"
+          align="center"
+          mt="xs"
+          className="cursor-pointer select-none"
+          onClick={() => setModelsExpanded((value) => !value)}
+        >
+          <Group gap={6}>
+            <ActionIcon
+              size="sm"
+              variant="subtle"
+              aria-label={modelsExpanded ? "Collapse models" : "Expand models"}
+              onClick={(event) => {
+                event.stopPropagation();
+                setModelsExpanded((value) => !value);
+              }}
+            >
+              {modelsExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </ActionIcon>
+            <div>
+              <Text size="sm" fw={600} c="var(--app-text)">
+                Models and voices
+              </Text>
+              <Text size="xs" c="var(--app-text-subtle)">
+                {service.models.length} model{service.models.length === 1 ? "" : "s"}
+              </Text>
+            </div>
+          </Group>
           {service.provider === "deepgram" ? (
             <Button
               size="compact-xs"
               variant="light"
               leftSection={<DownloadCloud size={14} />}
               loading={listDeepgramVoices.isPending}
-              onClick={loadDeepgramVoices}
+              onClick={(event) => {
+                event.stopPropagation();
+                loadDeepgramVoices();
+              }}
             >
               Load current voices
             </Button>
@@ -150,131 +167,23 @@ export function TtsServiceCard({ service, proxy, index, onChange, onRemove }: Tt
               size="compact-xs"
               variant="subtle"
               leftSection={<Plus size={14} />}
-              onClick={() => onChange({ models: [...service.models, emptyModel()] })}
+              onClick={(event) => {
+                event.stopPropagation();
+                onChange({ models: [...service.models, emptyModel()] });
+                setModelsExpanded(true);
+              }}
             >
               Add model
             </Button>
           )}
         </Group>
 
-        {service.models.length === 0 ? (
-          <Text size="sm" c="var(--app-text-subtle)" py="xs">
-            {service.provider === "deepgram"
-              ? "Load Deepgram’s current supported voices."
-              : "Add a TTS model and its supported voices."}
-          </Text>
-        ) : null}
-
-        {service.models.length > 0 ? (
-          <TextInput
-            size="xs"
-            radius="xl"
-            value={modelQuery}
-            onChange={(event) => setModelQuery(event.currentTarget.value)}
-            placeholder="Search models and voices"
-            aria-label="Search models and voices"
-            leftSection={<Search size={14} strokeWidth={1.6} />}
-            rightSection={
-              modelQuery ? (
-                <ActionIcon
-                  size="xs"
-                  variant="subtle"
-                  aria-label="Clear model search"
-                  onClick={() => setModelQuery("")}
-                >
-                  <X size={13} strokeWidth={1.7} />
-                </ActionIcon>
-              ) : null
-            }
-            rightSectionPointerEvents={modelQuery ? "all" : "none"}
-          />
-        ) : null}
-
-        <ScrollArea.Autosize mah={MODEL_LIST_MAX_HEIGHT} type="auto" offsetScrollbars="y">
-          <Stack gap="sm" pr="xs">
-            {normalizedQuery && visibleModels.length === 0 ? (
-              <Text size="sm" c="var(--app-text-subtle)" ta="center" py="md">
-                No matching models.
-              </Text>
-            ) : null}
-            {visibleModels.map(({ model, modelIndex }) => (
-              <div
-                key={`${model.id}-${modelIndex}`}
-                className="rounded-lg border border-[var(--app-border-subtle)] p-4"
-              >
-                <Group grow align="flex-start">
-                  <TextInput
-                    size="xs"
-                    label="Display name"
-                    value={model.name}
-                    onChange={(event) =>
-                      updateModel(modelIndex, { name: event.currentTarget.value })
-                    }
-                  />
-                  <TextInput
-                    size="xs"
-                    label="Model id"
-                    value={model.id}
-                    onChange={(event) => updateModel(modelIndex, { id: event.currentTarget.value })}
-                  />
-                  <VoicePreviewButton
-                    provider={service.provider}
-                    endpoint={service.endpoint}
-                    apiKey={service.apiKey}
-                    model={model.id}
-                    voice={model.voices[0] ?? model.id}
-                  />
-                  <ActionIcon
-                    mt={24}
-                    size="sm"
-                    variant="subtle"
-                    color="red"
-                    aria-label="Remove TTS model"
-                    onClick={() =>
-                      onChange({
-                        models: service.models.filter(
-                          (_, currentIndex) => currentIndex !== modelIndex,
-                        ),
-                      })
-                    }
-                  >
-                    <Trash2 size={14} />
-                  </ActionIcon>
-                </Group>
-                {service.provider === "openai-compatible" ? (
-                  <TagsInput
-                    mt="sm"
-                    size="xs"
-                    label="Voices"
-                    placeholder="Type a voice and press Enter"
-                    value={model.voices}
-                    onChange={(voices) => updateModel(modelIndex, { voices })}
-                  />
-                ) : null}
-              </div>
-            ))}
-          </Stack>
-        </ScrollArea.Autosize>
-
-        {hasMoreModels && !normalizedQuery ? (
-          <Button
-            size="compact-xs"
-            variant="subtle"
-            color="brand"
-            rightSection={
-              showAllModels ? (
-                <ChevronUp size={14} strokeWidth={1.7} />
-              ) : (
-                <ChevronDown size={14} strokeWidth={1.7} />
-              )
-            }
-            onClick={() => setShowAllModels((value) => !value)}
-          >
-            {showAllModels
-              ? "Show fewer"
-              : `Show ${service.models.length - INITIAL_MODEL_COUNT} more`}
-          </Button>
-        ) : null}
+        <TtsModelList
+          service={service}
+          expanded={modelsExpanded}
+          onUpdateModel={updateModel}
+          onRemoveModel={removeModel}
+        />
       </Stack>
     </section>
   );

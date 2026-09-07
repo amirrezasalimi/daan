@@ -1,0 +1,21 @@
+{
+  "name": "@daan/pocket-tts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@jax-js/jax": "catalog:",
+    "@jax-js/loaders": "catalog:"
+  },
+  "devDependencies": {
+    "@daan/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

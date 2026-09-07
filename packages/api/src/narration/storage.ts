@@ -7,9 +7,13 @@ function narrationDirectory(): string {
   return join(findProjectRoot(), "uploads", "narration");
 }
 
-export async function storeNarrationAudio(id: string, data: Uint8Array): Promise<string> {
+export async function storeNarrationAudio(
+  id: string,
+  data: Uint8Array,
+  format: "mp3" | "wav" = "mp3",
+): Promise<string> {
   const directory = narrationDirectory();
-  const path = join(directory, `${id}.mp3`);
+  const path = join(directory, `${id}.${format}`);
   await mkdir(directory, { recursive: true });
   await writeFile(path, data);
   return relative(findProjectRoot(), path);

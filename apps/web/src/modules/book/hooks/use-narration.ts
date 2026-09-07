@@ -10,16 +10,13 @@ import { client, getApiAssetUrl, orpc } from "@/shared/utils/orpc";
 
 import { useSettingsQuery } from "@/modules/settings";
 
+import { createNarrationModelOptions } from "../utils/narration-model-options";
+import { DEFAULT_SAVED_NARRATION_STATE, type SavedNarrationState } from "../utils/narration-state";
+import { useBrowserNarration } from "./use-browser-narration";
+import { useNarrationAudio } from "./use-narration-audio";
+
 type RouterOutputs = InferRouterOutputs<AppRouter>;
 export type NarrationSegment = RouterOutputs["narration"]["getSegments"][number];
-
-interface SavedNarrationState {
-  chapterId: string | null;
-  index: number;
-  progress: number;
-}
-
-const DEFAULT_SAVED_STATE: SavedNarrationState = { chapterId: null, index: 0, progress: 0 };
 
 function hasSelection(selection: TtsModelRef): boolean {
   return Boolean(selection.service && selection.model && selection.voice);
@@ -29,20 +26,24 @@ export function useNarration(bookId: string | null, chapterId: string | null) {
   const bookKey = bookId ?? "none";
   const queryClient = useQueryClient();
   const { data: settings } = useSettingsQuery();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const browserNarration = useBrowserNarration();
   const [selection, setSelection] = useState<TtsModelRef>({ service: "", model: "", voice: "" });
   const [wantsPlayback, setWantsPlayback] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useLocalStorage({ key: "daan:narration-volume", defaultValue: 0.8 });
+  const [playbackSpeed, setPlaybackSpeed] = useLocalStorage({
+    key: "daan:narration-speed",
+    defaultValue: 1,
+  });
+  const { audio, audioRef } = useNarrationAudio(volume, playbackSpeed);
   const [opened, setOpened] = useLocalStorage({
     key: `daan:narration-open:${bookKey}`,
     defaultValue: false,
   });
   const [savedState, setSavedState] = useLocalStorage<SavedNarrationState>({
     key: `daan:narration-state:${bookKey}`,
-    defaultValue: DEFAULT_SAVED_STATE,
+    defaultValue: DEFAULT_SAVED_NARRATION_STATE,
   });
 
   const restoresForChapter = savedState.chapterId === chapterId;
@@ -69,18 +70,6 @@ export function useNarration(bookId: string | null, chapterId: string | null) {
   );
 
   useEffect(() => {
-    const instance = new Audio();
-    audioRef.current = instance;
-    setAudio(instance);
-    return () => {
-      instance.pause();
-      instance.removeAttribute("src");
-      instance.load();
-      audioRef.current = null;
-    };
-  }, []);
-
-  useEffect(() => {
     if (!settings) return;
     const valid = settings.ttsServices.some(
       (service) =>
@@ -93,11 +82,6 @@ export function useNarration(bookId: string | null, chapterId: string | null) {
     );
     if (!valid) setSelection(settings.defaultTtsModel);
   }, [selection, settings]);
-
-  useEffect(() => {
-    if (!audio) return;
-    audio.volume = volume;
-  }, [audio, volume]);
 
   const prevChapterIdRef = useRef(chapterId);
   useEffect(() => {
@@ -130,6 +114,13 @@ export function useNarration(bookId: string | null, chapterId: string | null) {
         : false,
   });
 
+  const narrationCountQuery = useQuery({
+    ...orpc.narration.countChapterNarrations.queryOptions({
+      input: { chapterId: chapterId ?? "" },
+    }),
+    enabled: opened && Boolean(chapterId),
+  });
+
   const activeWorkerCountQuery = useQuery({
     ...orpc.narration.getActiveWorkerCount.queryOptions({ input: undefined }),
     enabled: opened,
@@ -140,15 +131,9 @@ export function useNarration(bookId: string | null, chapterId: string | null) {
     ...orpc.narration.getReadyVoices.queryOptions({ input: undefined }),
     enabled: opened,
   });
-  const readyVoiceKeys = useMemo(
-    () =>
-      new Set(
-        (readyVoicesQuery.data ?? []).map(
-          (entry) => `${entry.service}::${entry.model}::${entry.voice}`,
-        ),
-      ),
-    [readyVoicesQuery.data],
-  );
+
+  const selectedService = settings?.ttsServices.find((service) => service.id === selection.service);
+  const isBrowserProvider = selectedService?.provider === "browser-local";
 
   const generate = useMutation({
     mutationFn: (input: { startIndex: number; force: boolean; count?: number }) =>
@@ -160,10 +145,16 @@ export function useNarration(bookId: string | null, chapterId: string | null) {
         force: input.force,
       }),
     onSuccess: (segments) => {
+      void narrationCountQuery.refetch();
       queryClient.setQueryData(
         orpc.narration.getSegments.queryKey({ input: queryInput }),
         segments,
       );
+      if (isBrowserProvider && chapterId) {
+        void browserNarration.process(chapterId, selection, () => {
+          void segmentsQuery.refetch();
+        });
+      }
     },
     onError: (error: Error) => toast.error(error.message || "Could not generate narration"),
   });
@@ -175,6 +166,7 @@ export function useNarration(bookId: string | null, chapterId: string | null) {
       setWantsPlayback(false);
       setActiveIndex(0);
       void segmentsQuery.refetch();
+      void narrationCountQuery.refetch();
     },
   });
 
@@ -193,6 +185,9 @@ export function useNarration(bookId: string | null, chapterId: string | null) {
 
   useEffect(() => {
     if (!audio || !wantsPlayback || !activeSegment?.audioUrl) return;
+    audio.defaultPlaybackRate = playbackSpeed;
+    audio.playbackRate = playbackSpeed;
+    audio.preservesPitch = true;
     const source = getApiAssetUrl(activeSegment.audioUrl);
     if (audio.src !== source) {
       audio.src = source;
@@ -206,7 +201,7 @@ export function useNarration(bookId: string | null, chapterId: string | null) {
       setWantsPlayback(false);
       toast.error("Could not play narration audio");
     });
-  }, [activeSegment?.audioUrl, audio, wantsPlayback]);
+  }, [activeSegment?.audioUrl, audio, playbackSpeed, wantsPlayback]);
 
   useEffect(() => {
     if (!audio) return;
@@ -255,28 +250,21 @@ export function useNarration(bookId: string | null, chapterId: string | null) {
   };
 
   const modelOptions = useMemo(
-    () =>
-      (settings?.ttsServices ?? []).flatMap((service) =>
-        service.models.flatMap((model) =>
-          (model.voices.length ? model.voices : [model.id]).map((voice) => {
-            const key = `${service.id}::${model.id}::${voice}`;
-            const modelName = model.name || model.id;
-            const parts = [
-              service.name || "Service",
-              ...(modelName === voice ? [voice] : [modelName, voice]),
-            ];
-            if (readyVoiceKeys.has(key)) parts.push("[voice ready]");
-            return { value: key, label: parts.join(" \u00b7 ") };
-          }),
-        ),
-      ),
-    [readyVoiceKeys, settings?.ttsServices],
+    () => createNarrationModelOptions(settings?.ttsServices ?? [], readyVoicesQuery.data ?? []),
+    [readyVoicesQuery.data, settings?.ttsServices],
   );
 
   const changeModel = (value: string | null) => {
     const [service = "", model = "", voice = ""] = value?.split("::") ?? [];
-    audioRef.current?.pause();
+    const currentAudio = audioRef.current;
+    currentAudio?.pause();
+    currentAudio?.removeAttribute("src");
+    currentAudio?.load();
+    setIsPlaying(false);
     setWantsPlayback(false);
+    setDuration(0);
+    setProgressState(0);
+    pendingSeekRef.current = null;
     setSelection({ service, model, voice });
   };
 
@@ -284,13 +272,17 @@ export function useNarration(bookId: string | null, chapterId: string | null) {
     activeIndex,
     activeSegment,
     activeWorkerCount: activeWorkerCountQuery.data ?? 0,
+    cachedNarrationCount: narrationCountQuery.data ?? 0,
     changeModel,
     duration,
-    generatePending: generate.isPending,
+    browserLoadProgress: browserNarration.loadProgress,
+    browserStatus: browserNarration.status,
+    generatePending: generate.isPending || browserNarration.active,
     isPlaying,
     modelOptions,
     opened,
     playIndex,
+    playbackSpeed,
     progress,
     regenerate: () => generate.mutate({ startIndex: activeIndex, force: true, count: 1 }),
     reset: () => reset.mutate(),
@@ -299,6 +291,7 @@ export function useNarration(bookId: string | null, chapterId: string | null) {
     segments,
     selection,
     setOpened,
+    setPlaybackSpeed,
     setVolume,
     togglePlayback,
     volume,

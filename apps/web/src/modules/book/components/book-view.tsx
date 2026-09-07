@@ -192,12 +192,15 @@ export function BookView({ bookId }: BookViewProps) {
             <NarrationPlayer
               activeIndex={narration.activeIndex}
               activeWorkerCount={narration.activeWorkerCount}
-              currentText={narration.activeSegment?.content ?? ""}
+              browserLoadProgress={narration.browserLoadProgress}
+              browserStatus={narration.browserStatus}
+              cachedNarrationCount={narration.cachedNarrationCount}
               duration={narration.duration}
               error={narration.activeSegment?.error ?? null}
               generatePending={narration.generatePending}
               isPlaying={narration.isPlaying}
               modelOptions={narration.modelOptions}
+              playbackSpeed={narration.playbackSpeed}
               progress={narration.progress}
               resetPending={narration.resetPending}
               selection={narration.selection}
@@ -205,6 +208,7 @@ export function BookView({ bookId }: BookViewProps) {
               total={narration.segments.length}
               volume={narration.volume}
               onChangeModel={narration.changeModel}
+              onChangePlaybackSpeed={narration.setPlaybackSpeed}
               onChangeVolume={narration.setVolume}
               onClose={() => narration.setOpened(false)}
               onRegenerate={narration.regenerate}

@@ -7,6 +7,7 @@ import { useSettingsQuery, useUpdateSettings } from "../hooks/use-settings";
 import { GeneralPanel } from "./general-panel";
 import { LlmServicesPanel } from "./llm-services-panel";
 import { NarrationServicesPanel } from "./narration-services-panel";
+import { OnDeviceResourceUsage } from "./on-device-resource-usage";
 
 interface SettingsModalProps {
   opened: boolean;
@@ -73,6 +74,7 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
           styles={{
             list: { gap: "0.25rem" },
             tab: {
+              width: "100%",
               justifyContent: "flex-start",
               textAlign: "left",
               borderRadius: 0,
@@ -84,32 +86,34 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
             tabLabel: { textAlign: "left", flex: 1 },
           }}
         >
-          <Tabs.List
-            w={208}
-            className="shrink-0 border-r border-[var(--app-border-subtle)] px-4 py-5"
-          >
-            <Tabs.Tab
-              value="services"
-              className="px-4 py-3 text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-muted)] data-[active]:bg-[var(--app-surface-muted)] data-[active]:font-medium data-[active]:text-[var(--app-text)] data-[active]:!border-l-[var(--app-accent)]"
-              leftSection={<Server size={16} strokeWidth={1.5} />}
-            >
-              LLM services
-            </Tabs.Tab>
-            <Tabs.Tab
-              value="narration"
-              className="px-4 py-3 text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-muted)] data-[active]:bg-[var(--app-surface-muted)] data-[active]:font-medium data-[active]:text-[var(--app-text)] data-[active]:!border-l-[var(--app-accent)]"
-              leftSection={<AudioLines size={16} strokeWidth={1.5} />}
-            >
-              Narration
-            </Tabs.Tab>
-            <Tabs.Tab
-              value="general"
-              className="px-4 py-3 text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-muted)] data-[active]:bg-[var(--app-surface-muted)] data-[active]:font-medium data-[active]:text-[var(--app-text)] data-[active]:!border-l-[var(--app-accent)]"
-              leftSection={<SlidersHorizontal size={16} strokeWidth={1.5} />}
-            >
-              General
-            </Tabs.Tab>
-          </Tabs.List>
+          <div className="flex w-52 shrink-0 flex-col py-5">
+            <Tabs.List className="w-full">
+              <Tabs.Tab
+                value="services"
+                className="px-4 py-3 text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-muted)] data-[active]:bg-[var(--app-surface-muted)] data-[active]:font-medium data-[active]:text-[var(--app-text)] data-[active]:!border-l-[var(--app-accent)]"
+                leftSection={<Server size={16} strokeWidth={1.5} />}
+              >
+                LLM services
+              </Tabs.Tab>
+              <Tabs.Tab
+                value="narration"
+                className="px-4 py-3 text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-muted)] data-[active]:bg-[var(--app-surface-muted)] data-[active]:font-medium data-[active]:text-[var(--app-text)] data-[active]:!border-l-[var(--app-accent)]"
+                leftSection={<AudioLines size={16} strokeWidth={1.5} />}
+              >
+                Narration
+              </Tabs.Tab>
+              <Tabs.Tab
+                value="general"
+                className="px-4 py-3 text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-muted)] data-[active]:bg-[var(--app-surface-muted)] data-[active]:font-medium data-[active]:text-[var(--app-text)] data-[active]:!border-l-[var(--app-accent)]"
+                leftSection={<SlidersHorizontal size={16} strokeWidth={1.5} />}
+              >
+                General
+              </Tabs.Tab>
+            </Tabs.List>
+            <div className="mt-auto px-4">
+              <OnDeviceResourceUsage />
+            </div>
+          </div>
 
           <Tabs.Panel value="services" className="min-h-0 flex-1">
             <ScrollArea h="100%" type="auto">
