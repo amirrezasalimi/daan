@@ -1,12 +1,13 @@
 import type { ElectrobunConfig } from "electrobun";
 
 const webBuildDir = "../web/dist";
+const appVersion = process.env.DAAN_VERSION?.replace(/^v/, "") ?? "0.0.1";
 
 export default {
   app: {
     name: "daan",
     identifier: "dev.bettertstack.daan.desktop",
-    version: "0.0.1",
+    version: appVersion,
   },
   runtime: {
     exitOnLastWindowClosed: true,
