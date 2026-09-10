@@ -5,16 +5,26 @@ import type {
   ModelRef,
   Socks5ProxyConfig,
 } from "@daan/api/config/schema";
-import { SegmentedControl, Select, Stack, Switch, Text, TextInput } from "@mantine/core";
+import {
+  NumberInput,
+  SegmentedControl,
+  Select,
+  Stack,
+  Switch,
+  Text,
+  TextInput,
+} from "@mantine/core";
 
 interface GeneralPanelProps {
   services: LlmServiceConfig[];
   proxy: Socks5ProxyConfig;
   extractChapterMode: ExtractChapterMode;
   defaultModels: DefaultModels;
+  readerContentFontSize: number;
   onExtractChapterModeChange: (mode: ExtractChapterMode) => void;
   onDefaultModelsChange: (models: DefaultModels) => void;
   onProxyChange: (proxy: Socks5ProxyConfig) => void;
+  onReaderContentFontSizeChange: (fontSize: number) => void;
 }
 
 function toValue(ref: ModelRef): string | null {
@@ -33,9 +43,11 @@ export function GeneralPanel({
   proxy,
   extractChapterMode,
   defaultModels,
+  readerContentFontSize,
   onExtractChapterModeChange,
   onDefaultModelsChange,
   onProxyChange,
+  onReaderContentFontSizeChange,
 }: GeneralPanelProps) {
   const modelOptions = services.flatMap((service) =>
     service.models.map((model) => ({
@@ -72,6 +84,28 @@ export function GeneralPanel({
             onChange={(event) => onProxyChange({ ...proxy, url: event.currentTarget.value })}
           />
         ) : null}
+      </section>
+
+      <section className="border-b border-[var(--app-border-subtle)] py-6">
+        <Text fw={600} c="var(--app-text)" mb={4}>
+          Reading
+        </Text>
+        <Text size="xs" c="var(--app-text-muted)" mb="md">
+          Adjust how book content is displayed in the reader.
+        </Text>
+        <NumberInput
+          label="Content font size"
+          description="Applied to book content across all readers. Headings retain their own hierarchy."
+          suffix=" px"
+          min={14}
+          max={28}
+          step={1}
+          allowDecimal={false}
+          value={readerContentFontSize}
+          onChange={(value) => {
+            if (typeof value === "number") onReaderContentFontSizeChange(value);
+          }}
+        />
       </section>
 
       <section className="border-b border-[var(--app-border-subtle)] py-6">

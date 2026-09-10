@@ -131,6 +131,7 @@ export const appConfigSchema = z.object({
   narrateWithAI: z.boolean().default(false),
   narrateAheadCount: z.number().int().min(0).max(20).default(3),
   narrateStyle: z.enum(NARRATE_STYLES).default("neutral"),
+  readerContentFontSize: z.number().int().min(14).max(28).default(19),
   narrationPreparation: narrationPreparationSchema.default({
     enabled: false,
     model: { service: "", model: "" },
@@ -220,6 +221,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   narrateWithAI: false,
   narrateAheadCount: 3,
   narrateStyle: "neutral",
+  readerContentFontSize: 19,
   narrationPreparation: {
     enabled: false,
     model: { service: "", model: "" },

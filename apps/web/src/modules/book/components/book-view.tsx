@@ -7,12 +7,11 @@ import { WorkspaceFrame } from "@/shared/components";
 
 import { useSettingsQuery } from "@/modules/settings";
 
-import { useBookQuery, useChaptersQuery, useUpdateReaderSettings } from "../hooks/use-book";
+import { useBookQuery, useChaptersQuery } from "../hooks/use-book";
 import { useNarration } from "../hooks/use-narration";
 import { ChapterNav } from "./chapter-nav";
 import { ChapterReader } from "./chapter-reader";
 import { NarrationDock } from "./narration-dock";
-import { DEFAULT_READER_CONTENT_SIZE, ReaderSizeControl } from "./reader-size-control";
 import {
   clampChapterSidebarWidth,
   DEFAULT_CHAPTER_SIDEBAR_WIDTH,
@@ -88,11 +87,7 @@ export function BookView({ bookId }: BookViewProps) {
   const nextChapter = activeIndex >= 0 ? (chapters?.[activeIndex + 1] ?? null) : null;
   const loading = bookLoading || chaptersLoading;
   const narration = useNarration(bookId, activeChapter?.id ?? null);
-  const updateReaderSettings = useUpdateReaderSettings(bookId);
-  const contentFontSize =
-    typeof book?.settings?.fontSize === "number"
-      ? book.settings.fontSize
-      : DEFAULT_READER_CONTENT_SIZE;
+  const contentFontSize = settings?.readerContentFontSize ?? 19;
   const narrationOpen = narration.opened;
 
   const selectChapter = (chapterId: string, matchedTerms: string[]) => {
@@ -131,11 +126,6 @@ export function BookView({ bookId }: BookViewProps) {
       }
       headerActions={
         <Group gap="xs" wrap="nowrap">
-          <ReaderSizeControl
-            value={contentFontSize}
-            pending={updateReaderSettings.isPending}
-            onChange={(fontSize) => updateReaderSettings.mutate(fontSize)}
-          />
           {settings?.narrateWithAI ? (
             <Tooltip label={narrationOpen ? "Hide narration" : "Open narration"}>
               <ActionIcon

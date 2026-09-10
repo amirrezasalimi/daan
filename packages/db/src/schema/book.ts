@@ -14,7 +14,6 @@ export type BookType = (typeof BOOK_TYPES)[number];
 export type BookSettings = {
   theme?: string;
   fontFamily?: string;
-  fontSize?: number;
   [key: string]: unknown;
 };
 

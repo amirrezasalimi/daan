@@ -49,24 +49,6 @@ export const bookRouter = {
         .orderBy(asc(bookChapterContent.index));
     }),
 
-  updateReaderSettings: publicProcedure
-    .input(
-      z.object({
-        id: z.string().min(1),
-        fontSize: z.number().int().min(14).max(28),
-      }),
-    )
-    .handler(async ({ input }) => {
-      const [current] = await db
-        .select({ settings: book.settings })
-        .from(book)
-        .where(eq(book.id, input.id));
-      if (!current) throw new Error("Book not found");
-      const settings = { ...current.settings, fontSize: input.fontSize };
-      await db.update(book).set({ settings, updatedAt: new Date() }).where(eq(book.id, input.id));
-      return settings;
-    }),
-
   searchChapters: publicProcedure
     .input(
       z.object({

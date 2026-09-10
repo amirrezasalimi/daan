@@ -166,11 +166,15 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
                   proxy={draft.socks5Proxy}
                   extractChapterMode={draft.extractChapterMode}
                   defaultModels={draft.defaultModels}
+                  readerContentFontSize={draft.readerContentFontSize}
                   onExtractChapterModeChange={(extractChapterMode) =>
                     setDraft({ ...draft, extractChapterMode })
                   }
                   onDefaultModelsChange={(defaultModels) => setDraft({ ...draft, defaultModels })}
                   onProxyChange={(socks5Proxy) => setDraft({ ...draft, socks5Proxy })}
+                  onReaderContentFontSizeChange={(readerContentFontSize) =>
+                    setDraft({ ...draft, readerContentFontSize })
+                  }
                 />
               </div>
             </ScrollArea>
