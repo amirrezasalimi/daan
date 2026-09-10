@@ -1,6 +1,7 @@
 import { createContext } from "@daan/api/context";
 import { completeBrowserNarration, getNarrationAudioPath } from "@daan/api/narration/service";
 import { appRouter } from "@daan/api/routers/index";
+import { ensureNarrationPreparationSchema } from "@daan/db";
 import { desktopOrigins, env } from "@daan/env/server";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
@@ -10,8 +11,14 @@ import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { initializeQueues, narrationQueue, shutdownQueues } from "./queue";
+import {
+  initializeQueues,
+  narrationPreparationQueue,
+  narrationQueue,
+  shutdownQueues,
+} from "./queue";
 
+await ensureNarrationPreparationSchema();
 await initializeQueues();
 
 const app = new Hono();
@@ -72,7 +79,11 @@ export const rpcHandler = new RPCHandler(appRouter, {
 });
 
 app.use("/*", async (c, next) => {
-  const context = await createContext({ context: c, narrationQueue });
+  const context = await createContext({
+    context: c,
+    narrationQueue,
+    narrationPreparationQueue,
+  });
 
   const rpcResult = await rpcHandler.handle(c.req.raw, {
     prefix: "/rpc",

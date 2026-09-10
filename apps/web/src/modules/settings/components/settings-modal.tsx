@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useSettingsQuery, useUpdateSettings } from "../hooks/use-settings";
 import { GeneralPanel } from "./general-panel";
 import { LlmServicesPanel } from "./llm-services-panel";
+import { NarrationPreparationSettings } from "./narration-preparation-settings";
 import { NarrationServicesPanel } from "./narration-services-panel";
 import { OnDeviceResourceUsage } from "./on-device-resource-usage";
 
@@ -128,7 +129,22 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
 
           <Tabs.Panel value="narration" className="min-h-0 flex-1">
             <ScrollArea h="100%" type="auto">
-              <div className="p-6">
+              <div className="space-y-8 p-6">
+                <NarrationPreparationSettings
+                  llmServices={draft.llmServices}
+                  narrateWithAI={draft.narrateWithAI}
+                  narrateAheadCount={draft.narrateAheadCount}
+                  narrateStyle={draft.narrateStyle}
+                  preparation={draft.narrationPreparation}
+                  onNarrateWithAIChange={(narrateWithAI) => setDraft({ ...draft, narrateWithAI })}
+                  onNarrateAheadCountChange={(narrateAheadCount) =>
+                    setDraft({ ...draft, narrateAheadCount })
+                  }
+                  onNarrateStyleChange={(narrateStyle) => setDraft({ ...draft, narrateStyle })}
+                  onPreparationChange={(narrationPreparation) =>
+                    setDraft({ ...draft, narrationPreparation })
+                  }
+                />
                 <NarrationServicesPanel
                   services={draft.ttsServices}
                   proxy={draft.socks5Proxy}
@@ -149,18 +165,10 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
                   services={draft.llmServices}
                   proxy={draft.socks5Proxy}
                   extractChapterMode={draft.extractChapterMode}
-                  narrateWithAI={draft.narrateWithAI}
-                  narrateAheadCount={draft.narrateAheadCount}
-                  narrateStyle={draft.narrateStyle}
                   defaultModels={draft.defaultModels}
                   onExtractChapterModeChange={(extractChapterMode) =>
                     setDraft({ ...draft, extractChapterMode })
                   }
-                  onNarrateWithAIChange={(narrateWithAI) => setDraft({ ...draft, narrateWithAI })}
-                  onNarrateAheadCountChange={(narrateAheadCount) =>
-                    setDraft({ ...draft, narrateAheadCount })
-                  }
-                  onNarrateStyleChange={(narrateStyle) => setDraft({ ...draft, narrateStyle })}
                   onDefaultModelsChange={(defaultModels) => setDraft({ ...draft, defaultModels })}
                   onProxyChange={(socks5Proxy) => setDraft({ ...draft, socks5Proxy })}
                 />

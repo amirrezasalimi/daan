@@ -1,11 +1,20 @@
 import { relations } from "drizzle-orm";
 
-import { book, bookChapter, bookChapterContent, bookChapterContentNarration } from "./book";
+import {
+  book,
+  bookChapter,
+  bookChapterContent,
+  bookChapterContentNarration,
+  narrationPreparationRun,
+  preparedNarrationChunk,
+} from "./book";
 
 export const bookRelations = relations(book, ({ many }) => ({
   chapters: many(bookChapter),
   contents: many(bookChapterContent),
   narrations: many(bookChapterContentNarration),
+  narrationPreparationRuns: many(narrationPreparationRun),
+  preparedNarrationChunks: many(preparedNarrationChunk),
 }));
 
 export const bookChapterRelations = relations(bookChapter, ({ one, many }) => ({
@@ -15,6 +24,8 @@ export const bookChapterRelations = relations(bookChapter, ({ one, many }) => ({
   }),
   contents: many(bookChapterContent),
   narrations: many(bookChapterContentNarration),
+  narrationPreparationRuns: many(narrationPreparationRun),
+  preparedNarrationChunks: many(preparedNarrationChunk),
 }));
 
 export const bookChapterContentRelations = relations(bookChapterContent, ({ one, many }) => ({
@@ -27,6 +38,36 @@ export const bookChapterContentRelations = relations(bookChapterContent, ({ one,
     references: [bookChapter.id],
   }),
   narrations: many(bookChapterContentNarration),
+}));
+
+export const narrationPreparationRunRelations = relations(
+  narrationPreparationRun,
+  ({ one, many }) => ({
+    book: one(book, {
+      fields: [narrationPreparationRun.bookId],
+      references: [book.id],
+    }),
+    chapter: one(bookChapter, {
+      fields: [narrationPreparationRun.chapterId],
+      references: [bookChapter.id],
+    }),
+    preparedChunks: many(preparedNarrationChunk),
+  }),
+);
+
+export const preparedNarrationChunkRelations = relations(preparedNarrationChunk, ({ one }) => ({
+  run: one(narrationPreparationRun, {
+    fields: [preparedNarrationChunk.runId],
+    references: [narrationPreparationRun.id],
+  }),
+  book: one(book, {
+    fields: [preparedNarrationChunk.bookId],
+    references: [book.id],
+  }),
+  chapter: one(bookChapter, {
+    fields: [preparedNarrationChunk.chapterId],
+    references: [bookChapter.id],
+  }),
 }));
 
 export const bookChapterContentNarrationRelations = relations(

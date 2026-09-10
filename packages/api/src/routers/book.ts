@@ -4,7 +4,8 @@ import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { parseBookSource } from "../books";
-import { resetBookNarration, resetChapterContentNarration } from "../narration/service";
+import { resetChapterPreparation } from "../narration/preparation-service";
+import { resetBookNarration } from "../narration/service";
 import { cleanChapterTitle } from "../books/chapter-title";
 import { removeBookSource, storeBookSource } from "../books/source-storage";
 import { invalidateBookSearchIndex, searchBookChapters } from "../books/search-index";
@@ -46,6 +47,24 @@ export const bookRouter = {
         .from(bookChapterContent)
         .where(eq(bookChapterContent.chapterId, input.chapterId))
         .orderBy(asc(bookChapterContent.index));
+    }),
+
+  updateReaderSettings: publicProcedure
+    .input(
+      z.object({
+        id: z.string().min(1),
+        fontSize: z.number().int().min(14).max(28),
+      }),
+    )
+    .handler(async ({ input }) => {
+      const [current] = await db
+        .select({ settings: book.settings })
+        .from(book)
+        .where(eq(book.id, input.id));
+      if (!current) throw new Error("Book not found");
+      const settings = { ...current.settings, fontSize: input.fontSize };
+      await db.update(book).set({ settings, updatedAt: new Date() }).where(eq(book.id, input.id));
+      return settings;
     }),
 
   searchChapters: publicProcedure
@@ -167,11 +186,15 @@ export const bookRouter = {
     )
     .handler(async ({ input }) => {
       const rows = await db
-        .select({ bookId: bookChapterContent.bookId })
+        .select({
+          bookId: bookChapterContent.bookId,
+          chapterId: bookChapterContent.chapterId,
+        })
         .from(bookChapterContent)
         .where(eq(bookChapterContent.id, input.id));
 
-      await resetChapterContentNarration(input.id);
+      const chapterId = rows[0]?.chapterId;
+      if (chapterId) await resetChapterPreparation(chapterId);
       await db
         .update(bookChapterContent)
         .set({ content: input.content, updatedAt: new Date() })

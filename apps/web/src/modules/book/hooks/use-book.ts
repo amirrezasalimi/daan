@@ -1,8 +1,8 @@
 import type { AppRouter } from "@daan/api/routers/index";
 import type { InferRouterOutputs } from "@orpc/server";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { orpc } from "@/shared/utils/orpc";
+import { client, orpc } from "@/shared/utils/orpc";
 
 type RouterOutputs = InferRouterOutputs<AppRouter>;
 export type BookChapter = RouterOutputs["book"]["getChapters"][number];
@@ -15,6 +15,20 @@ export function useBookQuery(id: string) {
 
 export function useChaptersQuery(bookId: string) {
   return useQuery(orpc.book.getChapters.queryOptions({ input: { bookId } }));
+}
+
+export function useUpdateReaderSettings(bookId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (fontSize: number) => client.book.updateReaderSettings({ id: bookId, fontSize }),
+    onSuccess: (settings) => {
+      queryClient.setQueryData(
+        orpc.book.getById.queryKey({ input: { id: bookId } }),
+        (current: RouterOutputs["book"]["getById"] | undefined) =>
+          current ? { ...current, settings } : undefined,
+      );
+    },
+  });
 }
 
 export function useChapterContentQuery(chapterId: string | null) {

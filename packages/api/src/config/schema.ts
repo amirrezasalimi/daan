@@ -74,6 +74,9 @@ export const NARRATE_STYLES = [
 ] as const;
 export type NarrateStyle = (typeof NARRATE_STYLES)[number];
 
+export const NARRATION_PREPARATION_QUALITIES = ["fast", "balanced", "high"] as const;
+export type NarrationPreparationQuality = (typeof NARRATION_PREPARATION_QUALITIES)[number];
+
 /**
  * How chapters are detected when importing a book source.
  * - "auto": fast, local heuristic (table of contents / headings).
@@ -91,6 +94,19 @@ export const modelRefSchema = z.object({
   model: z.string().default(""),
 });
 export type ModelRef = z.infer<typeof modelRefSchema>;
+
+export const narrationPreparationSchema = z.object({
+  enabled: z.boolean().default(false),
+  model: modelRefSchema.default({ service: "", model: "" }),
+  targetLanguage: z.string().max(100).default(""),
+  targetChunkCount: z.number().int().min(1).max(20).default(3),
+  previousContextCount: z.number().int().min(0).max(20).default(2),
+  futureContextCount: z.number().int().min(0).max(20).default(3),
+  minimumCoveragePercent: z.number().int().min(1).max(100).default(80),
+  maxNextItems: z.number().int().min(1).max(100).default(20),
+  quality: z.enum(NARRATION_PREPARATION_QUALITIES).default("balanced"),
+});
+export type NarrationPreparationConfig = z.infer<typeof narrationPreparationSchema>;
 
 /**
  * Default models used for specific tasks.
@@ -115,6 +131,17 @@ export const appConfigSchema = z.object({
   narrateWithAI: z.boolean().default(false),
   narrateAheadCount: z.number().int().min(0).max(20).default(3),
   narrateStyle: z.enum(NARRATE_STYLES).default("neutral"),
+  narrationPreparation: narrationPreparationSchema.default({
+    enabled: false,
+    model: { service: "", model: "" },
+    targetLanguage: "",
+    targetChunkCount: 3,
+    previousContextCount: 2,
+    futureContextCount: 3,
+    minimumCoveragePercent: 80,
+    maxNextItems: 20,
+    quality: "balanced",
+  }),
   defaultTtsModel: ttsModelRefSchema.default({ service: "", model: "", voice: "" }),
   defaultModels: defaultModelsSchema.default({
     chat: { service: "", model: "" },
@@ -193,6 +220,17 @@ export const DEFAULT_CONFIG: AppConfig = {
   narrateWithAI: false,
   narrateAheadCount: 3,
   narrateStyle: "neutral",
+  narrationPreparation: {
+    enabled: false,
+    model: { service: "", model: "" },
+    targetLanguage: "",
+    targetChunkCount: 3,
+    previousContextCount: 2,
+    futureContextCount: 3,
+    minimumCoveragePercent: 80,
+    maxNextItems: 20,
+    quality: "balanced",
+  },
   defaultTtsModel: {
     service: BUILTIN_KOKORO_SERVICE.id,
     model: BUILTIN_KOKORO_SERVICE.models[0]!.id,

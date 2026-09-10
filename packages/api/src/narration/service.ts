@@ -1,10 +1,10 @@
 import { db } from "@daan/db";
-import { bookChapter, bookChapterContent, bookChapterContentNarration } from "@daan/db/schema/book";
+import { bookChapterContentNarration } from "@daan/db/schema/book";
 import { and, asc, count, eq, inArray } from "drizzle-orm";
 
 import { readConfig } from "../config";
 import { generateSpeech } from "./generate";
-import { segmentChapterContent } from "./segments";
+import { getEffectiveNarrationSegments } from "./source";
 import { removeNarrationAudio, resolveNarrationAudio, storeNarrationAudio } from "./storage";
 
 export interface NarrationSelection {
@@ -18,31 +18,8 @@ export interface NarrationQueue {
   getActiveCount(): Promise<number>;
 }
 
-async function chapterSegments(chapterId: string) {
-  const [chapter] = await db.select().from(bookChapter).where(eq(bookChapter.id, chapterId));
-  if (!chapter) throw new Error("Chapter not found");
-  const contents = await db
-    .select()
-    .from(bookChapterContent)
-    .where(eq(bookChapterContent.chapterId, chapterId))
-    .orderBy(asc(bookChapterContent.index));
-
-  let offset = 0;
-  return contents.flatMap((row) => {
-    const segments = segmentChapterContent(row.content ?? "", chapter.title).map((segment) => ({
-      ...segment,
-      index: offset + segment.index,
-      chapterContentId: row.id,
-      bookId: row.bookId,
-      chapterId: row.chapterId,
-    }));
-    offset += segments.length;
-    return segments;
-  });
-}
-
 export async function getNarrationSegments(chapterId: string, selection: NarrationSelection) {
-  const segments = await chapterSegments(chapterId);
+  const segments = await getEffectiveNarrationSegments(chapterId, readConfig());
   const records = selection.service
     ? await db
         .select()
@@ -75,6 +52,12 @@ export async function getNarrationSegments(chapterId: string, selection: Narrati
       originalContent: segment.originalContent,
       content: segment.content,
       hash: segment.hash,
+      sourceStartIndex: segment.sourceStartIndex,
+      sourceEndIndex: segment.sourceEndIndex,
+      preparationProviderId: segment.preparationProviderId,
+      preparationModel: segment.preparationModel,
+      preparationStyle: segment.preparationStyle,
+      preparationTargetLanguage: segment.preparationTargetLanguage,
       narrationId: record?.id ?? null,
       status: record?.status ?? "missing",
       error: record?.error ?? null,
@@ -109,7 +92,7 @@ export async function queueNarrationRange(input: {
     throw new Error("The selected Deepgram voice is not a valid Aura model");
   }
 
-  const segments = await chapterSegments(input.chapterId);
+  const segments = await getEffectiveNarrationSegments(input.chapterId, config);
   const selected = segments.slice(input.startIndex, input.startIndex + Math.max(1, input.count));
   for (const segment of selected) {
     const conditions = and(
@@ -136,6 +119,7 @@ export async function queueNarrationRange(input: {
           positionEnd: segment.positionEnd,
           content: segment.content,
           originalContent: segment.originalContent,
+          contentHash: segment.hash,
           audioPath: null,
           status: "pending",
           error: null,

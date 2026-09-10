@@ -1,4 +1,4 @@
-import { ActionIcon, Loader, Tooltip } from "@mantine/core";
+import { ActionIcon, Group, Loader, Tooltip } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
 import { AudioLines } from "lucide-react";
 import { type CSSProperties, useEffect, useState } from "react";
@@ -7,11 +7,12 @@ import { WorkspaceFrame } from "@/shared/components";
 
 import { useSettingsQuery } from "@/modules/settings";
 
-import { useBookQuery, useChaptersQuery } from "../hooks/use-book";
+import { useBookQuery, useChaptersQuery, useUpdateReaderSettings } from "../hooks/use-book";
 import { useNarration } from "../hooks/use-narration";
 import { ChapterNav } from "./chapter-nav";
 import { ChapterReader } from "./chapter-reader";
-import { NarrationPlayer } from "./narration-player";
+import { NarrationDock } from "./narration-dock";
+import { DEFAULT_READER_CONTENT_SIZE, ReaderSizeControl } from "./reader-size-control";
 import {
   clampChapterSidebarWidth,
   DEFAULT_CHAPTER_SIDEBAR_WIDTH,
@@ -87,6 +88,11 @@ export function BookView({ bookId }: BookViewProps) {
   const nextChapter = activeIndex >= 0 ? (chapters?.[activeIndex + 1] ?? null) : null;
   const loading = bookLoading || chaptersLoading;
   const narration = useNarration(bookId, activeChapter?.id ?? null);
+  const updateReaderSettings = useUpdateReaderSettings(bookId);
+  const contentFontSize =
+    typeof book?.settings?.fontSize === "number"
+      ? book.settings.fontSize
+      : DEFAULT_READER_CONTENT_SIZE;
   const narrationOpen = narration.opened;
 
   const selectChapter = (chapterId: string, matchedTerms: string[]) => {
@@ -124,19 +130,26 @@ export function BookView({ bookId }: BookViewProps) {
         </nav>
       }
       headerActions={
-        settings?.narrateWithAI ? (
-          <Tooltip label={narrationOpen ? "Hide narration" : "Open narration"}>
-            <ActionIcon
-              variant={narrationOpen ? "light" : "default"}
-              color="brand"
-              size="lg"
-              aria-label={narrationOpen ? "Hide narration" : "Open narration"}
-              onClick={() => narration.setOpened((value) => !value)}
-            >
-              <AudioLines size={17} strokeWidth={1.6} />
-            </ActionIcon>
-          </Tooltip>
-        ) : null
+        <Group gap="xs" wrap="nowrap">
+          <ReaderSizeControl
+            value={contentFontSize}
+            pending={updateReaderSettings.isPending}
+            onChange={(fontSize) => updateReaderSettings.mutate(fontSize)}
+          />
+          {settings?.narrateWithAI ? (
+            <Tooltip label={narrationOpen ? "Hide narration" : "Open narration"}>
+              <ActionIcon
+                variant={narrationOpen ? "light" : "default"}
+                color="brand"
+                size="lg"
+                aria-label={narrationOpen ? "Hide narration" : "Open narration"}
+                onClick={() => narration.setOpened((value) => !value)}
+              >
+                <AudioLines size={17} strokeWidth={1.6} />
+              </ActionIcon>
+            </Tooltip>
+          ) : null}
+        </Group>
       }
       contentScrollable={false}
     >
@@ -180,41 +193,51 @@ export function BookView({ bookId }: BookViewProps) {
           ) : (
             <ChapterReader
               chapter={activeChapter}
+              contentFontSize={contentFontSize}
               highlightTerms={highlightTerms}
               nextChapter={nextChapter}
               narrationActiveIndex={narrationOpen ? narration.activeIndex : null}
               narrationEnabled={narrationOpen}
+              narrationSegments={
+                narrationOpen && settings?.narrationPreparation.enabled ? narration.segments : []
+              }
               onNarrationSelect={narration.playIndex}
               onNextChapter={selectNextChapter}
             />
           )}
           {narrationOpen && activeChapter ? (
-            <NarrationPlayer
-              activeIndex={narration.activeIndex}
-              activeWorkerCount={narration.activeWorkerCount}
-              browserLoadProgress={narration.browserLoadProgress}
-              browserStatus={narration.browserStatus}
-              cachedNarrationCount={narration.cachedNarrationCount}
-              duration={narration.duration}
-              error={narration.activeSegment?.error ?? null}
-              generatePending={narration.generatePending}
-              isPlaying={narration.isPlaying}
-              modelOptions={narration.modelOptions}
-              playbackSpeed={narration.playbackSpeed}
-              progress={narration.progress}
-              resetPending={narration.resetPending}
-              selection={narration.selection}
-              status={narration.activeSegment?.status ?? "missing"}
-              total={narration.segments.length}
-              volume={narration.volume}
-              onChangeModel={narration.changeModel}
-              onChangePlaybackSpeed={narration.setPlaybackSpeed}
-              onChangeVolume={narration.setVolume}
-              onClose={() => narration.setOpened(false)}
-              onRegenerate={narration.regenerate}
-              onReset={narration.reset}
-              onSeek={narration.seek}
-              onTogglePlayback={narration.togglePlayback}
+            <NarrationDock
+              chapterId={activeChapter.id}
+              preparationStartIndex={
+                narration.activeSegment?.sourceStartIndex ?? narration.activeIndex
+              }
+              player={{
+                activeIndex: narration.activeIndex,
+                activeWorkerCount: narration.activeWorkerCount,
+                browserLoadProgress: narration.browserLoadProgress,
+                browserStatus: narration.browserStatus,
+                cachedNarrationCount: narration.cachedNarrationCount,
+                duration: narration.duration,
+                error: narration.activeSegment?.error ?? null,
+                generatePending: narration.generatePending,
+                isPlaying: narration.isPlaying,
+                modelOptions: narration.modelOptions,
+                playbackSpeed: narration.playbackSpeed,
+                progress: narration.progress,
+                resetPending: narration.resetPending,
+                selection: narration.selection,
+                status: narration.activeSegment?.status ?? "missing",
+                total: narration.segments.length,
+                volume: narration.volume,
+                onChangeModel: narration.changeModel,
+                onChangePlaybackSpeed: narration.setPlaybackSpeed,
+                onChangeVolume: narration.setVolume,
+                onClose: () => narration.setOpened(false),
+                onRegenerate: narration.regenerate,
+                onReset: narration.reset,
+                onSeek: narration.seek,
+                onTogglePlayback: narration.togglePlayback,
+              }}
             />
           ) : null}
         </div>

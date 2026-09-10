@@ -117,7 +117,7 @@ export function NarrationPlayer({
           </Button>
         </Group>
       </Modal>
-      <aside className="absolute bottom-4 right-4 z-20 w-[min(24rem,calc(100%-2rem))] rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface-raised)] p-4 shadow-md sm:bottom-6 sm:right-6 sm:w-[min(24rem,calc(100%-3rem))] sm:p-5">
+      <div className="p-4 sm:p-5">
         <Group justify="space-between" mb="lg">
           <div>
             <Group gap={6} align="center">
@@ -270,7 +270,7 @@ export function NarrationPlayer({
             )}
           </ActionIcon>
         </Group>
-      </aside>
+      </div>
     </>
   );
 }

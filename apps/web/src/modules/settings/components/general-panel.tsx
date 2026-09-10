@@ -3,32 +3,16 @@ import type {
   ExtractChapterMode,
   LlmServiceConfig,
   ModelRef,
-  NarrateStyle,
   Socks5ProxyConfig,
 } from "@daan/api/config/schema";
-import { NARRATE_STYLES } from "@daan/api/config/schema";
-import {
-  NumberInput,
-  SegmentedControl,
-  Select,
-  Stack,
-  Switch,
-  Text,
-  TextInput,
-} from "@mantine/core";
+import { SegmentedControl, Select, Stack, Switch, Text, TextInput } from "@mantine/core";
 
 interface GeneralPanelProps {
   services: LlmServiceConfig[];
   proxy: Socks5ProxyConfig;
   extractChapterMode: ExtractChapterMode;
-  narrateWithAI: boolean;
-  narrateAheadCount: number;
-  narrateStyle: NarrateStyle;
   defaultModels: DefaultModels;
   onExtractChapterModeChange: (mode: ExtractChapterMode) => void;
-  onNarrateWithAIChange: (value: boolean) => void;
-  onNarrateAheadCountChange: (value: number) => void;
-  onNarrateStyleChange: (style: NarrateStyle) => void;
   onDefaultModelsChange: (models: DefaultModels) => void;
   onProxyChange: (proxy: Socks5ProxyConfig) => void;
 }
@@ -48,14 +32,8 @@ export function GeneralPanel({
   services,
   proxy,
   extractChapterMode,
-  narrateWithAI,
-  narrateAheadCount,
-  narrateStyle,
   defaultModels,
   onExtractChapterModeChange,
-  onNarrateWithAIChange,
-  onNarrateAheadCountChange,
-  onNarrateStyleChange,
   onDefaultModelsChange,
   onProxyChange,
 }: GeneralPanelProps) {
@@ -65,11 +43,6 @@ export function GeneralPanel({
       label: `${service.name || "Service"} · ${model.name || model.id}`,
     })),
   );
-
-  const narrateOptions = NARRATE_STYLES.map((style) => ({
-    value: style,
-    label: style.charAt(0).toUpperCase() + style.slice(1),
-  }));
 
   return (
     <Stack gap={0}>
@@ -120,44 +93,6 @@ export function GeneralPanel({
             { value: "ai", label: "AI" },
           ]}
         />
-      </section>
-
-      <section className="border-b border-[var(--app-border-subtle)] py-6">
-        <div className="flex items-start justify-between gap-6">
-          <div>
-            <Text fw={600} c="var(--app-text)" mb={4}>
-              Narrate with AI
-            </Text>
-            <Text size="xs" c="var(--app-text-muted)">
-              Generate spoken narration using an AI voice.
-            </Text>
-          </div>
-          <Switch
-            mt={2}
-            checked={narrateWithAI}
-            onChange={(e) => onNarrateWithAIChange(e.currentTarget.checked)}
-            aria-label="Narrate with AI"
-          />
-        </div>
-        {narrateWithAI ? (
-          <Stack gap="sm" mt="md">
-            <NumberInput
-              label="Generate ahead"
-              description="Number of upcoming paragraphs prepared in the background."
-              min={0}
-              max={20}
-              value={narrateAheadCount}
-              onChange={(value) => onNarrateAheadCountChange(typeof value === "number" ? value : 0)}
-            />
-            <Select
-              label="Narration style"
-              data={narrateOptions}
-              value={narrateStyle}
-              allowDeselect={false}
-              onChange={(value) => onNarrateStyleChange((value as NarrateStyle) ?? "neutral")}
-            />
-          </Stack>
-        ) : null}
       </section>
 
       <section className="pt-6">

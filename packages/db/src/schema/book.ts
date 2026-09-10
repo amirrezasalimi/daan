@@ -80,6 +80,11 @@ export const bookChapter = sqliteTable(
 export const NARRATION_STATUSES = ["pending", "processing", "ready", "failed"] as const;
 export type NarrationStatus = (typeof NARRATION_STATUSES)[number];
 
+export const NARRATION_PREPARATION_QUALITIES = ["fast", "balanced", "high"] as const;
+export type NarrationPreparationQuality = (typeof NARRATION_PREPARATION_QUALITIES)[number];
+
+export type NarrationSourceHashes = string[];
+
 export const bookChapterContent = sqliteTable(
   "book_chapter_content",
   {
@@ -105,6 +110,109 @@ export const bookChapterContent = sqliteTable(
   (table) => [
     index("book_chapter_content_chapter_id_idx").on(table.chapterId, table.index),
     index("book_chapter_content_book_id_idx").on(table.bookId),
+  ],
+);
+
+export const narrationPreparationRun = sqliteTable(
+  "narration_preparation_run",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    bookId: text("book_id")
+      .notNull()
+      .references(() => book.id, { onDelete: "cascade" }),
+    chapterId: text("chapter_id")
+      .notNull()
+      .references(() => bookChapter.id, { onDelete: "cascade" }),
+    targetStartIndex: integer("target_start_index").notNull(),
+    targetEndIndex: integer("target_end_index").notNull(),
+    targetSourceHashes: text("target_source_hashes", { mode: "json" })
+      .$type<NarrationSourceHashes>()
+      .notNull(),
+    coveredSourceHashes: text("covered_source_hashes", { mode: "json" })
+      .$type<NarrationSourceHashes>()
+      .notNull(),
+    omittedSourceHashes: text("omitted_source_hashes", { mode: "json" })
+      .$type<NarrationSourceHashes>()
+      .notNull(),
+    providerId: text("provider_id").notNull(),
+    model: text("model").notNull(),
+    style: text("style").notNull(),
+    targetLanguage: text("target_language").notNull().default(""),
+    quality: text("quality", { enum: NARRATION_PREPARATION_QUALITIES }).notNull(),
+    targetChunkCount: integer("target_chunk_count").notNull(),
+    previousContextCount: integer("previous_context_count").notNull(),
+    futureContextCount: integer("future_context_count").notNull(),
+    minimumCoveragePercent: integer("minimum_coverage_percent").notNull(),
+    maxNextItems: integer("max_next_items").notNull(),
+    promptVersion: text("prompt_version").notNull(),
+    jobId: text("job_id"),
+    status: text("status", { enum: NARRATION_STATUSES }).notNull().default("pending"),
+    error: text("error"),
+    startedAt: integer("started_at", { mode: "timestamp_ms" }),
+    completedAt: integer("completed_at", { mode: "timestamp_ms" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`)
+      .$onUpdateFn(() => new Date()),
+  },
+  (table) => [
+    index("narration_preparation_run_book_status_idx").on(table.bookId, table.status),
+    index("narration_preparation_run_chapter_target_idx").on(
+      table.chapterId,
+      table.targetStartIndex,
+      table.targetEndIndex,
+    ),
+    uniqueIndex("narration_preparation_run_job_id_idx").on(table.jobId),
+  ],
+);
+
+export const preparedNarrationChunk = sqliteTable(
+  "prepared_narration_chunk",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    runId: text("run_id")
+      .notNull()
+      .references(() => narrationPreparationRun.id, { onDelete: "cascade" }),
+    bookId: text("book_id")
+      .notNull()
+      .references(() => book.id, { onDelete: "cascade" }),
+    chapterId: text("chapter_id")
+      .notNull()
+      .references(() => bookChapter.id, { onDelete: "cascade" }),
+    outputIndex: integer("output_index").notNull(),
+    sourceStartIndex: integer("source_start_index").notNull(),
+    sourceEndIndex: integer("source_end_index").notNull(),
+    sourceHashes: text("source_hashes", { mode: "json" }).$type<NarrationSourceHashes>().notNull(),
+    content: text("content").notNull(),
+    contentHash: text("content_hash").notNull(),
+    providerId: text("provider_id").notNull(),
+    model: text("model").notNull(),
+    style: text("style").notNull(),
+    targetLanguage: text("target_language").notNull().default(""),
+    quality: text("quality", { enum: NARRATION_PREPARATION_QUALITIES }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`)
+      .$onUpdateFn(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex("prepared_narration_chunk_run_output_idx").on(table.runId, table.outputIndex),
+    index("prepared_narration_chunk_chapter_source_idx").on(
+      table.chapterId,
+      table.sourceStartIndex,
+      table.sourceEndIndex,
+    ),
+    index("prepared_narration_chunk_book_idx").on(table.bookId),
   ],
 );
 
@@ -163,5 +271,9 @@ export type BookChapter = typeof bookChapter.$inferSelect;
 export type NewBookChapter = typeof bookChapter.$inferInsert;
 export type BookChapterContent = typeof bookChapterContent.$inferSelect;
 export type NewBookChapterContent = typeof bookChapterContent.$inferInsert;
+export type NarrationPreparationRun = typeof narrationPreparationRun.$inferSelect;
+export type NewNarrationPreparationRun = typeof narrationPreparationRun.$inferInsert;
+export type PreparedNarrationChunk = typeof preparedNarrationChunk.$inferSelect;
+export type NewPreparedNarrationChunk = typeof preparedNarrationChunk.$inferInsert;
 export type BookChapterContentNarration = typeof bookChapterContentNarration.$inferSelect;
 export type NewBookChapterContentNarration = typeof bookChapterContentNarration.$inferInsert;

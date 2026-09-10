@@ -3,18 +3,22 @@ import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useChapterContentQuery, type BookChapter } from "../hooks/use-book";
+import type { NarrationSegment } from "../hooks/use-narration";
 import {
   parseContentBlocks,
   removeRepeatedChapterHeading,
   type ContentRun,
 } from "../utils/content-blocks";
+import { PreparedNarrationChunk } from "./prepared-narration-chunk";
 
 interface ChapterReaderProps {
   chapter: BookChapter | null;
+  contentFontSize?: number;
   highlightTerms: string[];
   nextChapter: BookChapter | null;
   narrationActiveIndex?: number | null;
   narrationEnabled?: boolean;
+  narrationSegments?: NarrationSegment[];
   onNarrationSelect?: (index: number) => void;
   onNextChapter: () => void;
 }
@@ -51,10 +55,12 @@ function HighlightedText({ text, terms }: { text: string; terms: string[] }) {
 
 export function ChapterReader({
   chapter,
+  contentFontSize = 19,
   highlightTerms,
   nextChapter,
   narrationActiveIndex = null,
   narrationEnabled = false,
+  narrationSegments = [],
   onNarrationSelect,
   onNextChapter,
 }: ChapterReaderProps) {
@@ -71,6 +77,7 @@ export function ChapterReader({
     () => removeRepeatedChapterHeading(parseContentBlocks(text), chapter?.title ?? ""),
     [chapter?.title, text],
   );
+  const preparedView = narrationEnabled && narrationSegments.length > 0;
 
   const renderRuns = (runs: ContentRun[]) =>
     runs.map((run, index) => {
@@ -199,10 +206,22 @@ export function ChapterReader({
 
           <div
             data-search-content
-            className="[font-family:var(--mantine-font-family-headings)] text-[1.125rem] font-normal leading-[1.78] tracking-[0.003em] text-[var(--app-text)] antialiased sm:text-[1.1875rem]"
+            className="[font-family:var(--mantine-font-family-headings)] font-normal leading-[1.78] tracking-[0.003em] text-[var(--app-text)] antialiased"
+            style={{ fontSize: `${contentFontSize}px` }}
           >
             {isLoading ? (
               <Text c="var(--app-text-subtle)">Loading chapter…</Text>
+            ) : preparedView ? (
+              narrationSegments.map((segment, index) => (
+                <PreparedNarrationChunk
+                  key={`${segment.hash}:${index}`}
+                  active={narrationActiveIndex === index}
+                  index={index}
+                  segment={segment}
+                  renderText={(value) => <HighlightedText text={value} terms={highlightTerms} />}
+                  onSelect={onNarrationSelect}
+                />
+              ))
             ) : blocks.length === 0 ? (
               <Text c="var(--app-text-subtle)">This chapter has no extracted text.</Text>
             ) : (
