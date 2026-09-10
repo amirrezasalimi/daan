@@ -117,8 +117,8 @@ export function NarrationPlayer({
           </Button>
         </Group>
       </Modal>
-      <aside className="absolute bottom-5 right-5 z-20 w-[min(24rem,calc(100%-2.5rem))] rounded-xl border border-[var(--app-border)] bg-[var(--app-surface-raised)] p-4 shadow-md">
-        <Group justify="space-between" mb="sm">
+      <aside className="absolute bottom-4 right-4 z-20 w-[min(24rem,calc(100%-2rem))] rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface-raised)] p-4 shadow-md sm:bottom-6 sm:right-6 sm:w-[min(24rem,calc(100%-3rem))] sm:p-5">
+        <Group justify="space-between" mb="lg">
           <div>
             <Group gap={6} align="center">
               <Text size="sm" fw={600} c="var(--app-text)">
@@ -169,7 +169,7 @@ export function NarrationPlayer({
         />
 
         {browserStatus ? (
-          <div className="mt-3">
+          <div className="mt-4">
             <Group justify="space-between" gap="xs" mb={5}>
               <Text size="xs" c="var(--app-text-muted)" lineClamp={1}>
                 {browserStatus}
@@ -191,7 +191,8 @@ export function NarrationPlayer({
         ) : null}
 
         <Slider
-          mb={6}
+          mt="lg"
+          mb={8}
           size="xs"
           min={0}
           max={duration || 1}
@@ -202,74 +203,72 @@ export function NarrationPlayer({
           thumbLabel="Narration position"
           onChange={onSeek}
         />
-        <Group justify="space-between" align="center">
-          <Text size="xs" c="var(--app-text-subtle)" className="tabular-nums">
-            {preparing
-              ? "Preparing audio…"
-              : status === "failed"
-                ? "Generation failed"
-                : `${formatTime(progress)} / ${formatTime(duration)}`}
-          </Text>
-          <Group gap="sm" wrap="nowrap">
-            <Select
-              className="w-[4.5rem]"
+        <Text size="xs" c="var(--app-text-subtle)" className="tabular-nums">
+          {preparing
+            ? "Preparing audio…"
+            : status === "failed"
+              ? "Generation failed"
+              : `${formatTime(progress)} / ${formatTime(duration)}`}
+        </Text>
+        <Group justify="flex-end" gap="sm" wrap="nowrap" mt="md">
+          <Select
+            className="w-[4.5rem]"
+            size="xs"
+            variant="unstyled"
+            allowDeselect={false}
+            aria-label="Playback speed"
+            data={[
+              { value: "0.75", label: "0.75×" },
+              { value: "1", label: "1×" },
+              { value: "1.25", label: "1.25×" },
+              { value: "1.5", label: "1.5×" },
+              { value: "2", label: "2×" },
+            ]}
+            value={String(playbackSpeed)}
+            onChange={(value) => onChangePlaybackSpeed(Number(value ?? 1))}
+            styles={{ input: { textAlign: "right" } }}
+          />
+          <Group gap={6} wrap="nowrap">
+            {volume === 0 ? (
+              <VolumeX size={15} aria-hidden="true" className="text-[var(--app-text-subtle)]" />
+            ) : (
+              <Volume2 size={15} aria-hidden="true" className="text-[var(--app-text-subtle)]" />
+            )}
+            <Slider
+              className="w-16"
               size="xs"
-              variant="unstyled"
-              allowDeselect={false}
-              aria-label="Playback speed"
-              data={[
-                { value: "0.75", label: "0.75×" },
-                { value: "1", label: "1×" },
-                { value: "1.25", label: "1.25×" },
-                { value: "1.5", label: "1.5×" },
-                { value: "2", label: "2×" },
-              ]}
-              value={String(playbackSpeed)}
-              onChange={(value) => onChangePlaybackSpeed(Number(value ?? 1))}
-              styles={{ input: { textAlign: "right" } }}
+              min={0}
+              max={1}
+              step={0.05}
+              value={volume}
+              label={(value) => `${Math.round(value * 100)}%`}
+              thumbLabel="Narration volume"
+              onChange={onChangeVolume}
             />
-            <Group gap={6} wrap="nowrap">
-              {volume === 0 ? (
-                <VolumeX size={15} aria-hidden="true" className="text-[var(--app-text-subtle)]" />
-              ) : (
-                <Volume2 size={15} aria-hidden="true" className="text-[var(--app-text-subtle)]" />
-              )}
-              <Slider
-                className="w-16"
-                size="xs"
-                min={0}
-                max={1}
-                step={0.05}
-                value={volume}
-                label={(value) => `${Math.round(value * 100)}%`}
-                thumbLabel="Narration volume"
-                onChange={onChangeVolume}
-              />
-            </Group>
-            <Tooltip label="Regenerate current paragraph">
-              <ActionIcon
-                variant="subtle"
-                aria-label="Regenerate current paragraph"
-                loading={generatePending}
-                onClick={onRegenerate}
-              >
-                <RefreshCcw size={16} />
-              </ActionIcon>
-            </Tooltip>
-            <ActionIcon
-              size="lg"
-              variant="filled"
-              color="brand"
-              aria-label={isPlaying ? "Pause narration" : "Play narration"}
-              onClick={onTogglePlayback}
-            >
-              {isPlaying ? (
-                <Pause size={18} fill="currentColor" />
-              ) : (
-                <Play size={18} fill="currentColor" />
-              )}
-            </ActionIcon>
           </Group>
+          <Tooltip label="Regenerate current paragraph">
+            <ActionIcon
+              variant="subtle"
+              aria-label="Regenerate current paragraph"
+              loading={generatePending}
+              onClick={onRegenerate}
+            >
+              <RefreshCcw size={16} />
+            </ActionIcon>
+          </Tooltip>
+          <ActionIcon
+            size="lg"
+            variant="filled"
+            color="brand"
+            aria-label={isPlaying ? "Pause narration" : "Play narration"}
+            onClick={onTogglePlayback}
+          >
+            {isPlaying ? (
+              <Pause size={18} fill="currentColor" />
+            ) : (
+              <Play size={18} fill="currentColor" />
+            )}
+          </ActionIcon>
         </Group>
       </aside>
     </>

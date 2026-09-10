@@ -1,6 +1,6 @@
 import { ActionIcon, Badge, Button, Group, Modal, Text } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRight, BookOpen, FileText, Trash2 } from "lucide-react";
+import { BookOpen, FileText, Library, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { type BookSummary, useDeleteBook } from "../hooks/use-books";
@@ -26,9 +26,17 @@ export function BookList({ books }: BookListProps) {
 
   if (books.length === 0) {
     return (
-      <Text size="sm" c="var(--app-text-subtle)" ta="center" py="xl">
-        No books yet. Drop a PDF or EPUB above to get started.
-      </Text>
+      <div className="flex flex-col items-center rounded-3xl border border-[var(--app-border-subtle)] bg-[var(--app-surface)] px-6 py-14 text-center sm:py-16">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--app-surface-muted)] text-[var(--app-text-muted)]">
+          <Library size={20} strokeWidth={1.5} aria-hidden="true" />
+        </span>
+        <Text ff="heading" fz="xl" c="var(--app-text)" mt="md">
+          Your shelves are ready
+        </Text>
+        <Text size="sm" c="var(--app-text-muted)" mt={6} maw={380} lh={1.6}>
+          Import your first PDF or EPUB above. It will appear here when it is ready to read.
+        </Text>
+      </div>
     );
   }
 
@@ -68,60 +76,49 @@ export function BookList({ books }: BookListProps) {
         </Group>
       </Modal>
 
-      <div className="grid gap-4">
-        {books.map((book, index) => (
-          <div
+      <div className="overflow-hidden rounded-3xl border border-[var(--app-border-subtle)] bg-[var(--app-surface-raised)]">
+        {books.map((book) => (
+          <article
             key={book.id}
-            className="group relative grid gap-5 rounded-3xl border border-[var(--app-border-subtle)] bg-[var(--app-surface-raised)] p-5 shadow-xs transition-all hover:-translate-y-0.5 hover:border-[var(--app-border)] hover:shadow-sm sm:grid-cols-[auto_1fr_auto] sm:items-center sm:p-6"
+            className="group relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 border-b border-[var(--app-border-subtle)] p-4 transition-colors last:border-b-0 hover:bg-[var(--app-surface)] sm:gap-5 sm:p-5"
           >
             <Link
               to="/book/$id"
               params={{ id: book.id }}
-              className="absolute inset-0 rounded-3xl"
+              className="absolute inset-0"
               aria-label={`Open ${book.title}`}
             />
-            <div
-              className={`flex h-14 w-14 items-center justify-center rounded-2xl border border-[var(--app-border-subtle)] ${
-                index === 0
-                  ? "bg-[var(--app-surface-muted)] text-[var(--app-accent)]"
-                  : "bg-[var(--app-surface)] text-[var(--app-text-muted)]"
-              }`}
-            >
+            <div className="flex h-12 w-10 items-center justify-center rounded-lg border border-[var(--app-border-subtle)] bg-[var(--app-surface-muted)] text-[var(--app-accent)] sm:h-14 sm:w-12">
               {book.type === "pdf" ? (
-                <FileText size={22} strokeWidth={1.4} aria-hidden="true" />
+                <FileText size={20} strokeWidth={1.4} aria-hidden="true" />
               ) : (
-                <BookOpen size={22} strokeWidth={1.4} aria-hidden="true" />
+                <BookOpen size={20} strokeWidth={1.4} aria-hidden="true" />
               )}
             </div>
 
             <div className="min-w-0">
-              <Text ff="heading" fz="xl" c="var(--app-text)" className="truncate">
+              <Text ff="heading" fz="lg" c="var(--app-text)" className="truncate sm:!text-xl">
                 {book.title}
               </Text>
-              <Text size="sm" c="var(--app-text-muted)" mt={3} className="truncate">
-                {book.author || book.description || "No description"}
+              <Text size="sm" c="var(--app-text-muted)" mt={2} className="truncate">
+                {book.author || book.description || "Author unknown"}
               </Text>
             </div>
 
-            <div className="relative z-10 hidden items-center gap-3 sm:flex">
-              <Badge variant="light" color="brand" radius="sm">
+            <div className="relative z-10 flex items-center gap-1 sm:gap-3">
+              <Badge variant="light" color="brand" radius="xl" className="hidden sm:block">
                 {typeLabel(book.type)}
               </Badge>
               <ActionIcon
                 variant="subtle"
                 aria-label={`Delete ${book.title}`}
                 onClick={() => setBookToDelete(book)}
-                className="text-[var(--app-danger)]"
+                className="text-[var(--app-text-subtle)] hover:!bg-[var(--app-surface-muted)] hover:!text-[var(--app-danger)]"
               >
                 <Trash2 size={16} strokeWidth={1.6} />
               </ActionIcon>
-              <ArrowUpRight
-                size={18}
-                className="text-[var(--app-text-subtle)] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[var(--app-accent)]"
-                aria-hidden="true"
-              />
             </div>
-          </div>
+          </article>
         ))}
       </div>
     </>

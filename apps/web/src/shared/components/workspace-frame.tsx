@@ -1,4 +1,4 @@
-import { ActionIcon, Text } from "@mantine/core";
+import { ActionIcon } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
 import { Settings } from "lucide-react";
 import { type ReactNode, useState } from "react";
@@ -91,40 +91,5 @@ export function WorkspaceFrame({
         </section>
       </main>
     </>
-  );
-}
-
-interface WorkspaceNavItemProps {
-  children: ReactNode;
-  active?: boolean;
-  muted?: boolean;
-}
-
-export function WorkspaceNavItem({
-  children,
-  active = false,
-  muted = false,
-}: WorkspaceNavItemProps) {
-  return (
-    <button
-      type="button"
-      className={`w-full rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
-        active
-          ? "bg-[var(--app-surface-muted)] font-medium text-[var(--app-text)]"
-          : muted
-            ? "text-[var(--app-text-subtle)] hover:text-[var(--app-text)]"
-            : "text-[var(--app-text-muted)] hover:bg-[var(--app-surface-muted)] hover:text-[var(--app-text)]"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-export function WorkspaceNavLabel({ children }: { children: ReactNode }) {
-  return (
-    <Text size="xs" fw={600} c="var(--app-text)" mb="xs">
-      {children}
-    </Text>
   );
 }
